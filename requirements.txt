@@ -3,3 +3,5 @@ uvicorn[standard]>=0.34.0
 python-multipart>=0.0.18
 google-adk>=1.0.0
 google-genai>=1.0.0
+google-auth>=2.38.0
+itsdangerous>=2.2.0

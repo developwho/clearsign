@@ -459,7 +459,7 @@ tailwind.config = {
         <div id="googleLoginDropdown" class="hidden absolute right-0 top-10 bg-[#1a1a2e] border border-indigo-500/30 rounded-xl p-4 shadow-2xl min-w-[240px] z-50">
           <p class="text-xs text-gray-400 mb-3">Google 계정으로 로그인</p>
           <div id="googleBtnContainer"></div>
-          <p id="loginUnavailableMsg" class="hidden text-xs text-red-400 mt-2">Google 로그인을 사용할 수 없습니다.</p>
+          <p id="loginUnavailableMsg" class="hidden text-xs text-red-400 mt-2">Google 로그인이 비활성화되었습니다. 관리자 설정이 필요합니다.</p>
         </div>
       </div>
       <div id="userProfileIntro" class="hidden flex items-center gap-2 cursor-pointer" onclick="toggleUserMenu()">
@@ -1027,7 +1027,7 @@ tailwind.config = {
     <h3 class="text-xl font-bold mb-2" style="color:var(--text-primary);">ClearSign 로그인</h3>
     <p class="text-sm mb-6" style="color:var(--text-secondary);">Google 계정으로 로그인하여<br/>분석 기록을 저장하세요</p>
     <div id="googleBtnContainerModal" class="flex justify-center mb-4"></div>
-    <p id="loginUnavailableMsgModal" class="hidden text-xs text-red-400 mb-4">Google 로그인을 사용할 수 없습니다.</p>
+    <p id="loginUnavailableMsgModal" class="hidden text-xs text-red-400 mb-4">Google 로그인이 비활성화되었습니다. 관리자 설정이 필요합니다.</p>
     <button onclick="closeLoginModal()" class="text-sm hover:underline" style="color:var(--text-muted);">나중에 하기</button>
   </div>
 </div>
@@ -1079,6 +1079,15 @@ function setTheme(theme) {
 
 // ---- Google OAuth ----
 let googleLoginReady = false;
+let googleLoginEnabled = false;
+
+function setLoginUnavailableMessage(text) {
+  const message = text || 'Google 로그인이 비활성화되었습니다. 관리자 설정이 필요합니다.';
+  const msg = document.getElementById('loginUnavailableMsg');
+  const msgModal = document.getElementById('loginUnavailableMsgModal');
+  if (msg) msg.textContent = message;
+  if (msgModal) msgModal.textContent = message;
+}
 
 function onLoginClick() {
   const dropdown = document.getElementById('googleLoginDropdown');
@@ -1089,9 +1098,18 @@ function onLoginClick() {
 
 async function initGoogleLogin() {
   try {
-    const res = await fetch('/api/config');
+    const res = await fetch('/api/config', { credentials: 'include' });
+    if (!res.ok) return;
     const cfg = await res.json();
-    if (!cfg.googleClientId) return;
+    googleLoginEnabled = !!cfg.googleLoginEnabled;
+    if (!googleLoginEnabled || !cfg.googleClientId) {
+      setLoginUnavailableMessage('Google 로그인이 비활성화되었습니다. 관리자 설정이 필요합니다.');
+      return;
+    }
+    if (!window.google?.accounts?.id) {
+      setLoginUnavailableMessage('Google SDK를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
     google.accounts.id.initialize({
       client_id: cfg.googleClientId,
       callback: handleGoogleLogin,
@@ -1108,15 +1126,28 @@ async function initGoogleLogin() {
       );
     }
     googleLoginReady = true;
-  } catch (e) { console.log('Google login unavailable'); }
+  } catch (e) {
+    console.log('Google login unavailable');
+    setLoginUnavailableMessage('Google 로그인을 초기화할 수 없습니다.');
+  }
 }
 
-function handleGoogleLogin(response) {
+async function handleGoogleLogin(response) {
   try {
-    const token = response.credential;
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    currentUser = { name: payload.name, picture: payload.picture, email: payload.email };
-    localStorage.setItem('gsi_token', token);
+    const token = response?.credential;
+    if (!token) throw new Error('Missing credential');
+
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: token }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    if (!body.user?.id) throw new Error('Invalid user payload');
+
+    currentUser = body.user;
     const dropdown = document.getElementById('googleLoginDropdown');
     if (dropdown) dropdown.classList.add('hidden');
     closeLoginModal();
@@ -1124,21 +1155,31 @@ function handleGoogleLogin(response) {
     renderHistorySection();
   } catch (e) {
     console.error('Google login error:', e);
+    setLoginUnavailableMessage('로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    const msg = document.getElementById('loginUnavailableMsg');
+    const msgModal = document.getElementById('loginUnavailableMsgModal');
+    if (msg) msg.classList.remove('hidden');
+    if (msgModal) msgModal.classList.remove('hidden');
   }
 }
 
-function checkSavedLogin() {
-  const token = localStorage.getItem('gsi_token');
-  if (!token) return;
+async function checkSavedLogin() {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    if (payload.exp * 1000 < Date.now()) {
-      localStorage.removeItem('gsi_token');
+    const res = await fetch('/api/auth/me', { credentials: 'include' });
+    if (!res.ok) {
+      currentUser = null;
       return;
     }
-    currentUser = { name: payload.name, picture: payload.picture, email: payload.email };
+    const body = await res.json();
+    if (!body.user?.id) {
+      currentUser = null;
+      return;
+    }
+    currentUser = body.user;
     updateUserUI();
-  } catch { localStorage.removeItem('gsi_token'); }
+  } catch {
+    currentUser = null;
+  }
 }
 
 function updateUserUI() {
@@ -1168,19 +1209,22 @@ function toggleUserMenu() {
   handleLogout();
 }
 
-function handleLogout() {
-  if (confirm('로그아웃하시겠습니까?')) {
-    localStorage.removeItem('gsi_token');
-    currentUser = null;
-    location.reload();
+async function handleLogout(skipConfirm = false) {
+  if (!skipConfirm && !confirm('로그아웃하시겠습니까?')) return;
+  try {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+  } catch (e) {
+    console.error('Logout request failed:', e);
   }
+  currentUser = null;
+  location.reload();
 }
 
 // ---- Login Modal ----
 function openLoginModal() {
   const modal = document.getElementById('loginModal');
   if (modal) modal.classList.add('open');
-  if (!googleLoginReady) {
+  if (!googleLoginReady || !googleLoginEnabled) {
     const msg = document.getElementById('loginUnavailableMsgModal');
     if (msg) msg.classList.remove('hidden');
   }
@@ -1232,7 +1276,7 @@ function renderArchivePanel() {
       '<button onclick="closeSidebarPanel();openLoginModal()" class="mt-4 px-4 py-2 bg-[var(--primary-indigo)] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">로그인</button></div>';
     return;
   }
-  const history = JSON.parse(localStorage.getItem('cs_analysis_history') || '[]');
+  const history = getHistoryEntries();
   if (history.length === 0) {
     container.innerHTML = '<div class="flex flex-col items-center justify-center h-64 text-center">' +
       '<span class="material-symbols-outlined text-4xl mb-3" style="color:var(--text-muted)">folder_off</span>' +
@@ -1440,19 +1484,46 @@ function applyHighContrast() {
 function confirmAccountDeletion() {
   if (!confirm('정말로 계정을 탈퇴하시겠습니까?\n모든 분석 기록과 설정이 삭제됩니다.')) return;
   if (!confirm('이 작업은 되돌릴 수 없습니다. 정말 진행하시겠습니까?')) return;
-  localStorage.removeItem('cs_analysis_history');
+  clearCurrentUserHistory();
   localStorage.removeItem('cs_theme');
   localStorage.removeItem('cs_auto_analysis');
   localStorage.removeItem('cs_easy_level');
   localStorage.removeItem('cs_high_contrast');
-  localStorage.removeItem('gsi_token');
-  location.reload();
+  handleLogout(true);
 }
 
 // ---- History ----
+function getHistoryStorageKey() {
+  if (!currentUser?.id) return null;
+  return 'cs_analysis_history_' + currentUser.id;
+}
+
+function getHistoryEntries() {
+  const storageKey = getHistoryStorageKey();
+  if (!storageKey) return [];
+  try {
+    const raw = localStorage.getItem(storageKey);
+    return JSON.parse(raw || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function setHistoryEntries(entries) {
+  const storageKey = getHistoryStorageKey();
+  if (!storageKey) return;
+  localStorage.setItem(storageKey, JSON.stringify(entries));
+}
+
+function clearCurrentUserHistory() {
+  const storageKey = getHistoryStorageKey();
+  if (!storageKey) return;
+  localStorage.removeItem(storageKey);
+}
+
 function saveToHistory(data, filename) {
   if (!currentUser || isDemoMode) return;
-  const history = JSON.parse(localStorage.getItem('cs_analysis_history') || '[]');
+  const history = getHistoryEntries();
   const entry = {
     id: Date.now(),
     filename: filename,
@@ -1466,14 +1537,14 @@ function saveToHistory(data, filename) {
   };
   history.unshift(entry);
   if (history.length > 20) history.pop();
-  localStorage.setItem('cs_analysis_history', JSON.stringify(history));
+  setHistoryEntries(history);
 }
 
 function renderHistorySection() {
   const section = document.getElementById('historySection');
   if (!section) return;
   if (!currentUser) { section.style.display = 'none'; return; }
-  const history = JSON.parse(localStorage.getItem('cs_analysis_history') || '[]');
+  const history = getHistoryEntries();
   if (history.length === 0) { section.style.display = 'none'; return; }
   section.style.display = 'block';
   const list = document.getElementById('historyList');
@@ -1496,7 +1567,7 @@ function renderHistorySection() {
 }
 
 function loadHistoryEntry(idx) {
-  const history = JSON.parse(localStorage.getItem('cs_analysis_history') || '[]');
+  const history = getHistoryEntries();
   const entry = history[idx];
   if (!entry) return;
   isDemoMode = false;
@@ -1508,7 +1579,7 @@ function loadHistoryEntry(idx) {
 
 function clearHistory() {
   if (confirm('모든 분석 기록을 삭제하시겠습니까?')) {
-    localStorage.removeItem('cs_analysis_history');
+    clearCurrentUserHistory();
     renderHistorySection();
     if (currentPanel === 'settings') renderSettingsPanel();
     if (currentPanel === 'archive') renderArchivePanel();
@@ -1561,9 +1632,9 @@ function handleFileSelect(e) {
 }
 
 // Drag and drop
-document.addEventListener('DOMContentLoaded', () => {
-  checkSavedLogin();
-  initGoogleLogin();
+document.addEventListener('DOMContentLoaded', async () => {
+  await checkSavedLogin();
+  await initGoogleLogin();
   applyTheme();
   applyHighContrast();
   currentTabLevel = settingsEasyLevel;
@@ -1804,11 +1875,11 @@ function renderResults(data, filename) {
     renderDeviationChart(data);
     renderRiskChart(data);
 
-    // Comprehension quiz
+    // Comprehension quiz — lazy load from separate endpoint
     if (data.comprehension) {
       renderComprehension(data.comprehension);
     } else {
-      document.getElementById('comprehensionSection').classList.add('hidden');
+      loadComprehensionAsync(data);
     }
 
     // Save to history
@@ -2141,6 +2212,66 @@ function copyAction() {
     btn.innerHTML = '<span class="material-symbols-outlined text-sm">check</span> 복사됨!';
     setTimeout(() => { btn.innerHTML = orig; }, 1500);
   });
+}
+
+// ---- Comprehension Lazy Loading ----
+async function loadComprehensionAsync(data) {
+  const section = document.getElementById('comprehensionSection');
+  const container = document.getElementById('comprehensionContent');
+
+  // Show section with loading spinner
+  section.classList.remove('hidden');
+  container.innerHTML = `
+    <div class="flex items-center justify-center gap-3 py-8">
+      <svg class="animate-spin h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      <span class="text-sm text-gray-500">이해도 확인 문항을 생성하고 있습니다...</span>
+    </div>`;
+
+  try {
+    // Build risk_analysis from clauses data
+    const riskAnalysis = {
+      deviated_clauses: (data.clauses || []).map(c => ({
+        number: c.number, title: c.title,
+        deviationScore: c.deviationScore, riskAmount: c.riskAmount,
+        direction: c.direction, original: c.original, standard: c.standard,
+      })),
+      safe_clauses: (data.safeClausesSummary || []).map(s => ({
+        number: s.number, title: s.title,
+        deviationScore: s.deviationScore, status: s.status,
+      })),
+    };
+
+    const res = await fetch('/api/comprehension', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        risk_analysis: riskAnalysis,
+        final_result: data,
+      }),
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const result = await res.json();
+
+    const comp = result.comprehension || result;
+    if (comp.clozeQuestions || comp.scenarioQuestions || comp.recallQuestions) {
+      // Save to analysisData for answer checking
+      if (analysisData) analysisData.comprehension = comp;
+      renderComprehension(comp);
+    } else {
+      section.classList.add('hidden');
+    }
+  } catch (err) {
+    console.error('Comprehension load failed:', err);
+    container.innerHTML = `
+      <div class="text-center py-6">
+        <p class="text-sm text-gray-400">이해도 문항 생성에 실패했습니다.</p>
+        <button onclick="loadComprehensionAsync(analysisData)" class="mt-2 text-xs text-indigo-500 hover:text-indigo-700 underline">다시 시도</button>
+      </div>`;
+  }
 }
 
 // ---- Comprehension Quiz ----
