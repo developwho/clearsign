@@ -1,0 +1,7 @@
+.claude/
+*.md
+화면 예시/
+__pycache__/
+*.pyc
+.git/
+.env
