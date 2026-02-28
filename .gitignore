@@ -1,16 +1,22 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyo
 venv/
+.venv/
+
+# Secrets
 .env
 env.txt
+gemini_api_key.txt
 
-# Claude
+# Claude Code
 .claude/
 
 # IDE
 .vscode/
 .idea/
+*.swp
 
 # OS
 .DS_Store

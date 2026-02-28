@@ -6,6 +6,7 @@ import logging
 import os
 import traceback
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -50,15 +51,79 @@ if not SESSION_SECRET:
     logging.warning("SESSION_SECRET is not set — Google login disabled")
 PORT = int(os.environ.get("PORT", 8080))
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "시연, 문제정의 시작 화면")
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 FALLBACK_PATH = os.path.join(DATA_DIR, "fallback_analysis.json")
-TIMEOUT_SECONDS = int(os.environ.get("TIMEOUT_SECONDS", 45))
-SINGLE_CALL_TIMEOUT = int(os.environ.get("SINGLE_CALL_TIMEOUT", 25))
+TIMEOUT_SECONDS = int(os.environ.get("TIMEOUT_SECONDS", 180))
+SINGLE_CALL_TIMEOUT = int(os.environ.get("SINGLE_CALL_TIMEOUT", 120))
 
 # ---------------------------------------------------------------------------
-# FastAPI App
+# Pre-initialize ADK & Gemini (eliminate cold-start per request)
 # ---------------------------------------------------------------------------
-app = FastAPI(title="ClearSign", version="1.0.0")
+_adk_runner = None
+_adk_session_service = None
+
+
+def _init_adk():
+    global _adk_runner, _adk_session_service
+    try:
+        from google.adk.runners import Runner
+        from google.adk.sessions import InMemorySessionService
+
+        from agents import pipeline
+
+        _adk_session_service = InMemorySessionService()
+        _adk_runner = Runner(
+            agent=pipeline,
+            app_name="clearsign",
+            session_service=_adk_session_service,
+        )
+        logger.info("ADK pipeline pre-initialized")
+    except Exception as e:
+        logger.warning(f"ADK pre-init failed: {e}")
+
+
+_genai_client = None
+
+
+def _init_genai_client():
+    global _genai_client
+    try:
+        from google import genai
+
+        _genai_client = genai.Client(api_key=GEMINI_API_KEY)
+        logger.info("Gemini client pre-initialized")
+    except Exception as e:
+        logger.warning(f"Gemini client pre-init failed: {e}")
+
+
+if GEMINI_API_KEY:
+    _init_adk()
+    _init_genai_client()
+
+# ---------------------------------------------------------------------------
+# FastAPI App (with lifespan for Gemini warmup)
+# ---------------------------------------------------------------------------
+
+
+@asynccontextmanager
+async def lifespan(app):
+    # Warmup: send a tiny request to prime the connection
+    if GEMINI_API_KEY and _genai_client:
+        try:
+            from google.genai import types
+
+            await _genai_client.aio.models.generate_content(
+                model="gemini-3-flash-preview",
+                contents="ping",
+                config=types.GenerateContentConfig(max_output_tokens=1),
+            )
+            logger.info("Gemini warmup completed")
+        except Exception:
+            logger.warning("Gemini warmup failed (non-fatal)")
+    yield
+
+
+app = FastAPI(title="ClearSign", version="1.0.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
@@ -254,23 +319,18 @@ async def _verify_google_credential(credential: str) -> dict | None:
 
 async def run_adk_pipeline(file_bytes: bytes, mime_type: str) -> dict | None:
     """Run the ADK 3-agent pipeline. Returns parsed JSON or None on failure."""
+    global _adk_runner, _adk_session_service
     try:
-        from google.adk.runners import Runner
-        from google.adk.sessions import InMemorySessionService
         from google.genai import types
 
-        from agents import pipeline
-
-        session_service = InMemorySessionService()
-        runner = Runner(
-            agent=pipeline,
-            app_name="clearsign",
-            session_service=session_service,
-        )
+        if _adk_runner is None:
+            _init_adk()
+        if _adk_runner is None:
+            return None
 
         user_id = str(uuid.uuid4())
 
-        session = await session_service.create_session(
+        session = await _adk_session_service.create_session(
             app_name="clearsign",
             user_id=user_id,
         )
@@ -287,7 +347,7 @@ async def run_adk_pipeline(file_bytes: bytes, mime_type: str) -> dict | None:
         result_text = None
         t0 = time.time()
         last_agent = None
-        async for event in runner.run_async(
+        async for event in _adk_runner.run_async(
             user_id=user_id,
             session_id=session.id,
             new_message=user_content,
@@ -307,7 +367,7 @@ async def run_adk_pipeline(file_bytes: bytes, mime_type: str) -> dict | None:
 
         # If no final response text, try session state
         if not result_text:
-            session = await session_service.get_session(
+            session = await _adk_session_service.get_session(
                 app_name="clearsign",
                 user_id=user_id,
                 session_id=session.id,
@@ -347,7 +407,6 @@ SINGLE_CALL_PROMPT = """당신은 임대차 계약서 위험 분석 AI입니다.
 2. 국토교통부 표준 주택임대차계약서와 비교합니다.
 3. 표준 대비 임차인에게 불리하게 변경된 조항을 찾습니다.
 4. 각 위험 조항에 대해 쉬운 한국어 3단계 설명과 행동 스크립트를 생성합니다.
-5. 이해도 검증 문항(Cloze, 상황적용, 회상)을 생성합니다.
 
 쉬운 한국어 변환 시 7대 원칙:
 1. 통사 구조 재배열: 복합문→단문, 수동태→능동태
@@ -423,42 +482,6 @@ SINGLE_CALL_PROMPT = """당신은 임대차 계약서 위험 분석 AI입니다.
   "overallAction": {
     "type": "warning",
     "message": "전체 경고 메시지"
-  },
-  "comprehension": {
-    "clozeQuestions": [
-      {
-        "clauseNumber": "제N조",
-        "questionType": "cloze",
-        "sentence": "빈칸이 포함된 문장 (핵심어를 ___로 대체)",
-        "question": "빈칸에 들어갈 알맞은 말은?",
-        "answer": "정답",
-        "acceptableSynonyms": ["동의어1"],
-        "scoringNote": "의미 일치 여부만 판단"
-      }
-    ],
-    "scenarioQuestions": [
-      {
-        "clauseNumber": "제N조",
-        "questionType": "scenario",
-        "scenario": "구체적 상황 설명",
-        "question": "이런 상황에서 어떻게 해야 하나요?",
-        "choices": [
-          {"label": "A", "text": "선택지1"},
-          {"label": "B", "text": "선택지2"},
-          {"label": "C", "text": "선택지3"}
-        ],
-        "correctAnswer": "A",
-        "explanation": "정답 이유"
-      }
-    ],
-    "recallQuestions": [
-      {
-        "questionType": "recall",
-        "question": "이 계약서에서 가장 위험한 점 3가지는?",
-        "goldStandardIdeas": ["아이디어1", "아이디어2", "아이디어3"],
-        "scoringNote": "3가지 중 2가지 이상 언급하면 이해한 것으로 판단"
-      }
-    ]
   }
 }
 
@@ -468,13 +491,14 @@ JSON만 출력하세요."""
 async def run_single_gemini(file_bytes: bytes, mime_type: str) -> dict | None:
     """Fallback: single Gemini call with full prompt."""
     try:
-        from google import genai
         from google.genai import types
 
-        client = genai.Client(api_key=GEMINI_API_KEY)
+        client = _genai_client
+        if client is None:
+            from google import genai
+            client = genai.Client(api_key=GEMINI_API_KEY)
 
-        response = await asyncio.to_thread(
-            client.models.generate_content,
+        response = await client.aio.models.generate_content(
             model="gemini-3-flash-preview",
             contents=types.Content(
                 role="user",
@@ -707,21 +731,7 @@ async def analyze(file: UploadFile = File(...)):
 
     logger.info(f"Analyzing file: {file.filename} ({mime_type}, {len(file_bytes)} bytes)")
 
-    # Attempt 1: ADK Pipeline
-    try:
-        result = await asyncio.wait_for(
-            run_adk_pipeline(file_bytes, mime_type),
-            timeout=TIMEOUT_SECONDS,
-        )
-        if result:
-            result["analysisMode"] = "real"
-            return JSONResponse(content=result)
-    except asyncio.TimeoutError:
-        logger.warning("ADK pipeline timed out")
-    except Exception as e:
-        logger.error(f"ADK attempt failed: {e}")
-
-    # Attempt 2: Single Gemini call (separate shorter timeout)
+    # Attempt 1: Single Gemini call (fast, no ADK overhead)
     try:
         result = await asyncio.wait_for(
             run_single_gemini(file_bytes, mime_type),
@@ -734,6 +744,20 @@ async def analyze(file: UploadFile = File(...)):
         logger.warning("Single Gemini timed out")
     except Exception as e:
         logger.error(f"Single Gemini attempt failed: {e}")
+
+    # Attempt 2: ADK Pipeline (slower but more thorough)
+    try:
+        result = await asyncio.wait_for(
+            run_adk_pipeline(file_bytes, mime_type),
+            timeout=TIMEOUT_SECONDS,
+        )
+        if result:
+            result["analysisMode"] = "real"
+            return JSONResponse(content=result)
+    except asyncio.TimeoutError:
+        logger.warning("ADK pipeline timed out")
+    except Exception as e:
+        logger.error(f"ADK attempt failed: {e}")
 
     # Attempt 3: Static fallback (always succeeds)
     logger.info("Returning static fallback")

@@ -1,10 +1,17 @@
 venv/
+.venv/
 __pycache__/
 *.pyc
 .claude/
 .git/
+.gitignore
 .env
 env.txt
-화면 예시/
-변환 기준/
+gemini_api_key.txt
 *.md
+!README.md
+LICENSE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
