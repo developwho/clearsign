@@ -53,6 +53,28 @@ tailwind.config = {
     --text-muted: #9ca3af;
     --risk-high: #EF4444;
     --safe-green: #10B981;
+    /* Light theme defaults */
+    --bg-primary: #f9fafb;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --border-color: #e5e7eb;
+    --sidebar-bg: #ffffff;
+    --sidebar-border: #e5e7eb;
+    --hover-bg: rgba(0,0,0,0.03);
+  }
+  [data-theme="dark"] {
+    --bg-primary: #0a0a0f;
+    --bg-secondary: #13131f;
+    --bg-card: #1a1a2e;
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --text-muted: #6b7280;
+    --border-color: #2a2a3a;
+    --sidebar-bg: #0a0a0f;
+    --sidebar-border: #2a2a3a;
+    --hover-bg: rgba(255,255,255,0.05);
   }
   body {
     font-family: 'Noto Sans KR', sans-serif;
@@ -174,6 +196,235 @@ tailwind.config = {
   }
   /* File preview collapse */
   .file-preview-container { transition: max-height 0.3s ease; overflow: hidden; }
+
+  /* ===== Unified Sidebar ===== */
+  #unifiedSidebar {
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .sidebar-nav-btn {
+    color: var(--text-muted);
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .sidebar-nav-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-secondary);
+  }
+  .sidebar-nav-btn.active {
+    background: rgba(79,70,229,0.1);
+    color: var(--primary-indigo);
+    border-color: rgba(79,70,229,0.2);
+  }
+
+  /* ===== Settings Toggle Switch ===== */
+  .settings-toggle {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    background: #d1d5db;
+    border-radius: 13px;
+    cursor: pointer;
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .settings-toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .settings-toggle.active {
+    background: var(--primary-indigo);
+  }
+  .settings-toggle.active::after {
+    transform: translateX(22px);
+  }
+
+  /* ===== Settings Range Slider ===== */
+  .settings-range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+  }
+  .settings-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--primary-indigo);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(79,70,229,0.4);
+  }
+  .settings-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--primary-indigo);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 1px 4px rgba(79,70,229,0.4);
+  }
+  [data-theme="dark"] .settings-range {
+    background: #374151;
+  }
+
+  /* ===== High Contrast Mode ===== */
+  [data-high-contrast="true"] {
+    --text-primary: #000000;
+    --text-secondary: #1a1a1a;
+    --text-muted: #333333;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --bg-card: #ffffff;
+    --border-color: #000000;
+  }
+  [data-high-contrast="true"][data-theme="dark"] {
+    --text-primary: #ffffff;
+    --text-secondary: #f0f0f0;
+    --text-muted: #cccccc;
+    --bg-primary: #000000;
+    --bg-secondary: #0a0a0a;
+    --bg-card: #111111;
+    --border-color: #ffffff;
+  }
+
+  /* ===== Slide Panels ===== */
+  .slide-panel {
+    position: fixed;
+    top: 0;
+    left: 80px;
+    height: 100%;
+    width: 320px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    transform: translateX(-400px);
+    transition: transform 0.3s ease;
+    z-index: 35;
+    overflow-y: auto;
+  }
+  .slide-panel.open { transform: translateX(0); }
+  .slide-panel-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 34;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .slide-panel-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ===== Login Modal ===== */
+  .login-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 60;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .login-modal-overlay.open { display: flex; }
+  .login-modal-box {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+  }
+
+  /* ===== Dark mode overrides: Loading Screen ===== */
+  [data-theme="dark"] #loadingScreen > main { background: #0a0a0f !important; }
+  [data-theme="dark"] #loadingScreen .bg-gray-50 { background: #13131f !important; }
+  [data-theme="dark"] #loadingScreen .bg-white { background: #1a1a2e !important; }
+  [data-theme="dark"] #loadingScreen .text-gray-900 { color: #f9fafb !important; }
+  [data-theme="dark"] #loadingScreen .text-gray-500 { color: #d1d5db !important; }
+  [data-theme="dark"] #loadingScreen .border-gray-100,
+  [data-theme="dark"] #loadingScreen .border-gray-200 { border-color: #2a2a3a !important; }
+  [data-theme="dark"] #loadingScreen .bg-gray-100 { background: rgba(255,255,255,0.08) !important; }
+  [data-theme="dark"] #loadingScreen .bg-gray-200 { background: rgba(255,255,255,0.1) !important; }
+  [data-theme="dark"] #loadingScreen .bg-indigo-50 { background: rgba(79,70,229,0.1) !important; }
+  [data-theme="dark"] #loadingScreen .border-indigo-100 { border-color: rgba(79,70,229,0.2) !important; }
+  [data-theme="dark"] #loadingScreen .bg-indigo-200 { background: rgba(79,70,229,0.2) !important; }
+  [data-theme="dark"] #loadingScreen .bg-blue-100 { background: rgba(59,130,246,0.1) !important; }
+  [data-theme="dark"] #loadingScreen .shadow-xl { box-shadow: 0 20px 25px rgba(0,0,0,0.4) !important; }
+  [data-theme="dark"] #loadingScreen .border-indigo-50 { border-color: rgba(79,70,229,0.15) !important; }
+
+  /* ===== Dark mode overrides: Result Screen ===== */
+  [data-theme="dark"] #resultScreen > main { background: #0a0a0f !important; }
+  [data-theme="dark"] #resultScreen .bg-gray-50 { background: #13131f !important; }
+  [data-theme="dark"] #resultScreen .bg-white { background: #1a1a2e !important; }
+  [data-theme="dark"] #resultScreen .text-gray-900 { color: #f9fafb !important; }
+  [data-theme="dark"] #resultScreen .text-gray-800 { color: #e5e7eb !important; }
+  [data-theme="dark"] #resultScreen .text-gray-700 { color: #d1d5db !important; }
+  [data-theme="dark"] #resultScreen .text-gray-600 { color: #d1d5db !important; }
+  [data-theme="dark"] #resultScreen .text-gray-500 { color: #9ca3af !important; }
+  [data-theme="dark"] #resultScreen .text-gray-400 { color: #6b7280 !important; }
+  [data-theme="dark"] #resultScreen .border-gray-200 { border-color: #2a2a3a !important; }
+  [data-theme="dark"] #resultScreen .border-gray-100 { border-color: rgba(255,255,255,0.08) !important; }
+  [data-theme="dark"] #resultScreen .bg-gray-100 { background: rgba(255,255,255,0.06) !important; }
+  [data-theme="dark"] #resultScreen .custom-scroll::-webkit-scrollbar-thumb { background: #374151; }
+  [data-theme="dark"] #resultScreen .bg-indigo-50\/50,
+  [data-theme="dark"] #resultScreen .bg-indigo-50 { background: rgba(79,70,229,0.08) !important; }
+  [data-theme="dark"] #resultScreen .border-indigo-100 { border-color: rgba(79,70,229,0.2) !important; }
+  [data-theme="dark"] #resultScreen .text-indigo-600 { color: #818CF8 !important; }
+  [data-theme="dark"] #resultScreen .bg-red-50 { background: rgba(239,68,68,0.08) !important; }
+  [data-theme="dark"] #resultScreen .border-red-200,
+  [data-theme="dark"] #resultScreen .border-red-100 { border-color: rgba(239,68,68,0.2) !important; }
+  [data-theme="dark"] #resultScreen .text-red-700 { color: #FCA5A5 !important; }
+  [data-theme="dark"] #resultScreen .text-red-600 { color: #F87171 !important; }
+  [data-theme="dark"] #resultScreen .text-red-800 { color: #FCA5A5 !important; }
+  [data-theme="dark"] #resultScreen .bg-green-50 { background: rgba(16,185,129,0.08) !important; }
+  [data-theme="dark"] #resultScreen .border-green-100 { border-color: rgba(16,185,129,0.2) !important; }
+  [data-theme="dark"] #resultScreen .bg-amber-50 { background: rgba(245,158,11,0.08) !important; }
+  [data-theme="dark"] #resultScreen .border-amber-200 { border-color: rgba(245,158,11,0.2) !important; }
+  [data-theme="dark"] #resultScreen .text-amber-700 { color: #FCD34D !important; }
+  [data-theme="dark"] #resultScreen .text-amber-800 { color: #FDE68A !important; }
+  [data-theme="dark"] #resultScreen .bg-purple-50\/50 { background: rgba(139,92,246,0.08) !important; }
+  [data-theme="dark"] #resultScreen .border-purple-100 { border-color: rgba(139,92,246,0.2) !important; }
+  [data-theme="dark"] #resultScreen .demo-banner { background: rgba(79,70,229,0.1) !important; border-color: rgba(129,140,248,0.3) !important; }
+  [data-theme="dark"] #resultScreen .demo-banner .text-indigo-700 { color: #A5B4FC !important; }
+  [data-theme="dark"] #resultScreen .demo-banner .text-indigo-500 { color: #818CF8 !important; }
+
+  /* ===== Light mode overrides: Upload Screen ===== */
+  [data-theme="light"] #uploadScreen { background: #f9fafb !important; }
+  [data-theme="light"] #uploadScreen > main { background: #f9fafb !important; }
+  [data-theme="light"] #uploadScreen .text-white:not(.bg-\[var\(--primary-indigo\)\] *) { color: #111827 !important; }
+  [data-theme="light"] #uploadScreen h1 { background-image: linear-gradient(to right, #111827, #6b7280) !important; -webkit-background-clip: text !important; }
+  [data-theme="light"] #uploadScreen .text-gray-400 { color: #6b7280 !important; }
+  [data-theme="light"] #uploadScreen .text-gray-500 { color: #9ca3af !important; }
+  [data-theme="light"] #uploadScreen .text-gray-300 { color: #374151 !important; }
+  [data-theme="light"] #uploadScreen .text-gray-200 { color: #374151 !important; }
+  [data-theme="light"] #uploadScreen .glass-panel {
+    background: rgba(0,0,0,0.02) !important;
+    border-color: #e5e7eb !important;
+    backdrop-filter: blur(10px);
+  }
+  [data-theme="light"] #uploadScreen .bg-\[\#1a1a24\] { background: #e5e7eb !important; }
+  [data-theme="light"] #uploadScreen .border-\[\#2a2a3a\] { border-color: #e5e7eb !important; }
+  [data-theme="light"] #uploadScreen .bg-indigo-900\/20,
+  [data-theme="light"] #uploadScreen .bg-indigo-600\/10,
+  [data-theme="light"] #uploadScreen .bg-indigo-900\/10 { opacity: 0.3 !important; }
 </style>
 </head>
 
@@ -182,7 +433,7 @@ tailwind.config = {
 <!-- ============================================================ -->
 <!-- SCREEN 1: INTRO (dark, no sidebar)                            -->
 <!-- ============================================================ -->
-<div id="introScreen" class="screen active h-screen w-full flex-col items-center justify-center relative overflow-hidden">
+<div id="introScreen" class="screen active h-screen w-full flex-col items-center justify-center relative overflow-hidden bg-[#0a0a0f] text-white">
   <!-- BG blurs -->
   <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
     <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-900/20 rounded-full blur-[120px]"></div>
@@ -321,38 +572,100 @@ tailwind.config = {
 
 
 <!-- ============================================================ -->
+<!-- UNIFIED SIDEBAR (fixed, hidden on intro)                      -->
+<!-- ============================================================ -->
+<aside id="unifiedSidebar" class="fixed left-0 top-0 h-full w-20 flex-col items-center py-6 z-40" style="display:none;">
+  <div class="mb-8 cursor-pointer" onclick="showScreen('intro')">
+    <span class="material-symbols-outlined text-3xl text-[var(--primary-indigo)]">assignment_turned_in</span>
+  </div>
+  <nav class="flex-1 space-y-4 w-full flex flex-col items-center">
+    <button id="sidebarBtnUpload" onclick="showScreen('upload')" class="sidebar-nav-btn p-3 rounded-xl relative group">
+      <span class="material-symbols-outlined">upload_file</span>
+      <span class="absolute left-16 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-gray-700 z-50">계약서 업로드</span>
+    </button>
+    <button id="sidebarBtnArchive" onclick="toggleSidebarPanel('archive')" class="sidebar-nav-btn p-3 rounded-xl relative group">
+      <span class="material-symbols-outlined">folder_open</span>
+      <span class="absolute left-16 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-gray-700 z-50">보관함</span>
+    </button>
+    <button id="sidebarBtnSettings" onclick="showScreen('settings')" class="sidebar-nav-btn p-3 rounded-xl relative group">
+      <span class="material-symbols-outlined">settings</span>
+      <span class="absolute left-16 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-gray-700 z-50">설정</span>
+    </button>
+  </nav>
+  <button onclick="toggleTheme()" class="mb-4 p-2 rounded-lg transition-colors sidebar-nav-btn" title="테마 전환">
+    <span id="sidebarThemeIcon" class="material-symbols-outlined text-xl">light_mode</span>
+  </button>
+  <div class="cursor-pointer sidebar-avatar" onclick="handleSidebarAvatarClick()">
+    <div class="w-10 h-10 rounded-full overflow-hidden border border-[var(--border-color)] flex items-center justify-center" style="background:var(--bg-card);color:var(--text-muted);">
+      <span class="material-symbols-outlined sidebar-avatar-icon">person</span>
+      <img class="sidebar-avatar-img hidden w-full h-full object-cover" src="" alt=""/>
+    </div>
+  </div>
+</aside>
+
+<!-- Slide Panel: Archive -->
+<div id="archivePanel" class="slide-panel custom-scroll">
+  <div class="p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-lg font-bold" style="color:var(--text-primary);">보관함</h3>
+      <button onclick="closeSidebarPanel()" class="p-1 rounded-lg" style="color:var(--text-muted);">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div id="archivePanelContent"></div>
+  </div>
+</div>
+
+<!-- Slide Panel: Settings -->
+<div id="settingsPanel" class="slide-panel custom-scroll">
+  <div class="p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-lg font-bold" style="color:var(--text-primary);">설정</h3>
+      <button onclick="closeSidebarPanel()" class="p-1 rounded-lg" style="color:var(--text-muted);">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div id="settingsPanelContent"></div>
+  </div>
+</div>
+
+<!-- Panel Backdrop -->
+<div id="panelBackdrop" class="slide-panel-backdrop" onclick="closeSidebarPanel()"></div>
+
+
+<!-- ============================================================ -->
+<!-- SCREEN 5: SETTINGS (full-page)                                -->
+<!-- ============================================================ -->
+<div id="settingsScreen" class="screen h-screen overflow-hidden">
+  <main class="flex-1 flex flex-col overflow-hidden ml-20 relative" style="background:var(--bg-primary);">
+    <!-- BG blurs -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+      <div class="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-indigo-900/10 rounded-full blur-3xl"></div>
+    </div>
+    <!-- Top bar -->
+    <div class="px-8 py-4 flex items-center gap-3 flex-shrink-0 relative z-10" style="border-bottom:1px solid var(--border-color);background:var(--bg-secondary);">
+      <button onclick="goBackFromSettings()" class="p-2 rounded-lg transition-colors" style="color:var(--text-secondary);" onmouseover="this.style.background='var(--hover-bg)'" onmouseout="this.style.background='transparent'">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <h2 class="text-lg font-bold" style="color:var(--text-primary);">설정</h2>
+    </div>
+    <!-- Scrollable content -->
+    <div class="flex-1 overflow-y-auto custom-scroll relative z-10">
+      <div class="max-w-4xl mx-auto px-8 py-8 space-y-6" id="settingsScreenContent">
+        <!-- Rendered dynamically by renderSettingsScreen() -->
+      </div>
+    </div>
+  </main>
+</div>
+
+
+<!-- ============================================================ -->
 <!-- SCREEN 2: UPLOAD (dark + sidebar)                             -->
 <!-- ============================================================ -->
 <div id="uploadScreen" class="screen h-screen overflow-hidden">
-  <!-- Sidebar (dark) -->
-  <aside id="sidebarUpload" class="w-20 border-r border-[#2a2a3a] flex flex-col items-center py-6 flex-shrink-0 z-20 bg-[#0a0a0f]">
-    <div class="mb-8 cursor-pointer" onclick="showScreen('intro')">
-      <span class="material-symbols-outlined text-3xl text-[var(--primary-indigo)]">assignment_turned_in</span>
-    </div>
-    <nav class="flex-1 space-y-6 w-full flex flex-col items-center">
-      <button class="p-3 rounded-xl bg-indigo-500/10 text-[var(--primary-indigo)] border border-indigo-500/20 transition-colors relative group">
-        <span class="material-symbols-outlined">upload_file</span>
-        <span class="absolute left-14 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-gray-700 z-50">계약서 업로드</span>
-      </button>
-      <button class="p-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-gray-200 transition-colors relative group">
-        <span class="material-symbols-outlined">folder_open</span>
-        <span class="absolute left-14 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-gray-700 z-50">보관함</span>
-      </button>
-      <button class="p-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-gray-200 transition-colors relative group">
-        <span class="material-symbols-outlined">settings</span>
-        <span class="absolute left-14 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-gray-700 z-50">설정</span>
-      </button>
-    </nav>
-    <div class="mt-auto sidebar-avatar">
-      <div class="w-10 h-10 rounded-full bg-gray-800 overflow-hidden border border-gray-700 flex items-center justify-center text-gray-500">
-        <span class="material-symbols-outlined sidebar-avatar-icon">person</span>
-        <img class="sidebar-avatar-img hidden w-full h-full object-cover" src="" alt=""/>
-      </div>
-    </div>
-  </aside>
-
   <!-- Main upload area -->
-  <main class="flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden">
+  <main class="flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden ml-20">
     <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
       <div class="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-3xl"></div>
       <div class="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-indigo-900/10 rounded-full blur-3xl"></div>
@@ -371,14 +684,14 @@ tailwind.config = {
 
       <!-- Upload drop zone -->
       <div class="group relative w-full" id="dropZone">
-        <input class="hidden" id="fileInput" type="file" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileSelect(event)"/>
+        <input class="hidden" id="fileInput" type="file" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif,.html,.htm,.txt,.csv,.rtf" onchange="handleFileSelect(event)"/>
         <label class="block w-full cursor-pointer" for="fileInput">
           <div class="glass-panel rounded-3xl p-16 flex flex-col items-center justify-center transition-all duration-300 group-hover:border-indigo-500/50 group-hover:bg-white/[0.04]" id="dropArea">
             <div class="w-24 h-24 mb-8 rounded-full bg-[#1a1a24] flex items-center justify-center group-hover:scale-105 transition-transform duration-300 border border-[#2a2a3a]">
               <span class="material-symbols-outlined text-4xl text-indigo-400">cloud_upload</span>
             </div>
             <h3 class="text-xl font-medium text-white mb-2">계약서 파일을 이곳에 드래그하세요</h3>
-            <p class="text-sm text-gray-500 mb-8">또는 클릭하여 파일 선택 (PDF, JPG, PNG)</p>
+            <p class="text-sm text-gray-500 mb-8">또는 클릭하여 파일 선택 (PDF, 이미지, HTML, TXT 등)</p>
             <span class="px-8 py-3 rounded-xl border border-indigo-500/30 text-indigo-300 font-medium hover:bg-indigo-500/10 hover:border-indigo-500/60 transition-all duration-200 flex items-center gap-2">
               <span class="material-symbols-outlined text-sm">folder_open</span>
               파일 선택하기
@@ -402,46 +715,15 @@ tailwind.config = {
       </div>
     </div>
 
-    <!-- Recent history -->
-    <div class="mt-16 w-full max-w-3xl glass-panel rounded-2xl p-6 opacity-60 hover:opacity-100 transition-opacity">
+    <!-- Dynamic history section -->
+    <div id="historySection" class="mt-16 w-full max-w-3xl glass-panel rounded-2xl p-6 opacity-60 hover:opacity-100 transition-opacity" style="display:none;">
       <div class="flex items-center justify-between mb-4">
         <h4 class="text-sm font-semibold text-gray-300 flex items-center gap-2">
           <span class="material-symbols-outlined text-base">history</span>
           최근 분석 기록
         </h4>
       </div>
-      <div class="space-y-3">
-        <div class="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group border border-transparent hover:border-gray-800">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded bg-red-500/10 flex items-center justify-center text-red-400 border border-red-500/20">
-              <span class="material-symbols-outlined text-sm">picture_as_pdf</span>
-            </div>
-            <div>
-              <p class="text-sm text-gray-200 font-medium group-hover:text-indigo-300 transition-colors">서울시 관악구 원룸 전세계약서.pdf</p>
-              <p class="text-xs text-gray-500">2023. 10. 24. 오후 2:30</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="px-2 py-1 rounded text-[10px] font-medium bg-red-500/10 text-red-400 border border-red-500/20">위험 감지</span>
-            <span class="material-symbols-outlined text-gray-600 group-hover:text-gray-400">chevron_right</span>
-          </div>
-        </div>
-        <div class="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group border border-transparent hover:border-gray-800">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20">
-              <span class="material-symbols-outlined text-sm">image</span>
-            </div>
-            <div>
-              <p class="text-sm text-gray-200 font-medium group-hover:text-indigo-300 transition-colors">오피스텔 임대차 계약서_촬영본.jpg</p>
-              <p class="text-xs text-gray-500">2023. 10. 22. 오전 11:15</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="px-2 py-1 rounded text-[10px] font-medium bg-green-500/10 text-green-400 border border-green-500/20">안전</span>
-            <span class="material-symbols-outlined text-gray-600 group-hover:text-gray-400">chevron_right</span>
-          </div>
-        </div>
-      </div>
+      <div id="historyList" class="space-y-3"></div>
     </div>
   </main>
 </div>
@@ -451,31 +733,8 @@ tailwind.config = {
 <!-- SCREEN 3: LOADING (light + sidebar)                           -->
 <!-- ============================================================ -->
 <div id="loadingScreen" class="screen h-screen overflow-hidden">
-  <!-- Sidebar (light) -->
-  <aside class="w-20 bg-white border-r border-gray-200 flex flex-col items-center py-6 flex-shrink-0 z-20">
-    <div class="mb-8">
-      <span class="material-symbols-outlined text-3xl text-[var(--primary-indigo)]">assignment_turned_in</span>
-    </div>
-    <nav class="flex-1 space-y-6 w-full flex flex-col items-center">
-      <button class="p-3 rounded-xl bg-indigo-50 text-[var(--primary-indigo)] transition-colors">
-        <span class="material-symbols-outlined">description</span>
-      </button>
-      <button class="p-3 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors">
-        <span class="material-symbols-outlined">folder_open</span>
-      </button>
-      <button class="p-3 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors">
-        <span class="material-symbols-outlined">settings</span>
-      </button>
-    </nav>
-    <div class="mt-auto">
-      <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-gray-300 flex items-center justify-center text-gray-400">
-        <span class="material-symbols-outlined">person</span>
-      </div>
-    </div>
-  </aside>
-
   <!-- Loading content -->
-  <main class="flex-1 flex flex-col items-center justify-center relative bg-gray-50 overflow-hidden">
+  <main class="flex-1 flex flex-col items-center justify-center relative bg-gray-50 overflow-hidden ml-20">
     <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
       <div class="absolute top-[20%] left-[10%] w-64 h-64 bg-indigo-200 rounded-full blur-[100px] opacity-30"></div>
       <div class="absolute bottom-[20%] right-[10%] w-80 h-80 bg-blue-100 rounded-full blur-[120px] opacity-40"></div>
@@ -535,35 +794,8 @@ tailwind.config = {
 <!-- SCREEN 4: RESULT (light + sidebar)                            -->
 <!-- ============================================================ -->
 <div id="resultScreen" class="screen h-screen overflow-hidden">
-  <!-- Sidebar (light) -->
-  <aside class="w-20 bg-white border-r border-gray-200 flex flex-col items-center py-6 flex-shrink-0 z-20">
-    <div class="mb-8 cursor-pointer" onclick="showScreen('intro')">
-      <span class="material-symbols-outlined text-3xl text-[var(--primary-indigo)]">assignment_turned_in</span>
-    </div>
-    <nav class="flex-1 space-y-6 w-full flex flex-col items-center">
-      <button class="p-3 rounded-xl bg-indigo-50 text-[var(--primary-indigo)] transition-colors">
-        <span class="material-symbols-outlined">description</span>
-      </button>
-      <button class="p-3 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors">
-        <span class="material-symbols-outlined">folder_open</span>
-      </button>
-      <button onclick="showScreen('upload')" class="p-3 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors">
-        <span class="material-symbols-outlined">upload_file</span>
-      </button>
-      <button class="p-3 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors">
-        <span class="material-symbols-outlined">settings</span>
-      </button>
-    </nav>
-    <div class="mt-auto sidebar-avatar">
-      <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-gray-300 flex items-center justify-center text-gray-400">
-        <span class="material-symbols-outlined sidebar-avatar-icon">person</span>
-        <img class="sidebar-avatar-img hidden w-full h-full object-cover" src="" alt=""/>
-      </div>
-    </div>
-  </aside>
-
   <!-- Result content: 2-column -->
-  <main class="flex-1 flex flex-col bg-gray-50 overflow-hidden">
+  <main class="flex-1 flex flex-col bg-gray-50 overflow-hidden ml-20">
     <!-- Top bar -->
     <div class="px-8 py-4 bg-white border-b border-gray-200 flex items-center justify-between flex-shrink-0">
       <div class="flex items-center gap-3">
@@ -626,6 +858,18 @@ tailwind.config = {
           </div>
           <!-- Clauses rendered here (Grammarly annotation view) -->
           <div id="clauseList" class="space-y-1"></div>
+
+          <!-- Comprehension quiz section -->
+          <div id="comprehensionSection" class="mt-10 hidden">
+            <div class="border-t border-gray-200 pt-8">
+              <h3 class="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
+                <span class="material-symbols-outlined text-green-500">quiz</span>
+                이해도 확인
+              </h3>
+              <p class="text-sm text-gray-400 mb-6">계약서 내용을 제대로 이해했는지 확인해보세요</p>
+              <div id="comprehensionContent" class="space-y-6"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -729,6 +973,24 @@ tailwind.config = {
               수정 요청 문구 복사
             </button>
           </div>
+
+          <!-- Structured Breakdown -->
+          <div id="detailBreakdown" class="mt-6 hidden">
+            <h4 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base text-indigo-500">list_alt</span>
+              한눈에 보기
+            </h4>
+            <div id="detailBreakdownContent" class="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 space-y-2"></div>
+          </div>
+
+          <!-- Term Glossary -->
+          <div id="detailGlossary" class="mt-6 hidden">
+            <h4 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base text-purple-500">menu_book</span>
+              어려운 말 쉽게 풀기
+            </h4>
+            <div id="detailGlossaryContent" class="space-y-3"></div>
+          </div>
         </div>
 
         <!-- Bottom CTA -->
@@ -743,6 +1005,22 @@ tailwind.config = {
   </main>
 </div>
 
+
+<!-- ============================================================ -->
+<!-- GLOBAL LOGIN MODAL                                             -->
+<!-- ============================================================ -->
+<div id="loginModal" class="login-modal-overlay" onclick="if(event.target===this)closeLoginModal()">
+  <div class="login-modal-box text-center">
+    <div class="w-14 h-14 mx-auto mb-4 bg-[var(--primary-indigo)] rounded-2xl flex items-center justify-center">
+      <span class="material-symbols-outlined text-3xl text-white">assignment_turned_in</span>
+    </div>
+    <h3 class="text-xl font-bold mb-2" style="color:var(--text-primary);">ClearSign 로그인</h3>
+    <p class="text-sm mb-6" style="color:var(--text-secondary);">Google 계정으로 로그인하여<br/>분석 기록을 저장하세요</p>
+    <div id="googleBtnContainerModal" class="flex justify-center mb-4"></div>
+    <p id="loginUnavailableMsgModal" class="hidden text-xs text-red-400 mb-4">Google 로그인을 사용할 수 없습니다.</p>
+    <button onclick="closeLoginModal()" class="text-sm hover:underline" style="color:var(--text-muted);">나중에 하기</button>
+  </div>
+</div>
 
 <!-- ============================================================ -->
 <!-- JAVASCRIPT                                                     -->
@@ -760,6 +1038,34 @@ let isDemoMode = false;
 let currentUser = null;
 let filePreviewOpen = true;
 let loadingStartTime = 0;
+let currentTheme = localStorage.getItem('cs_theme') || 'dark';
+let currentPanel = null;
+let previousScreenName = null;
+let settingsAutoAnalysis = localStorage.getItem('cs_auto_analysis') !== 'false';
+let settingsEasyLevel = parseInt(localStorage.getItem('cs_easy_level') || '2');
+let settingsHighContrast = localStorage.getItem('cs_high_contrast') === 'true';
+
+// ---- Theme ----
+function applyTheme() {
+  document.body.setAttribute('data-theme', currentTheme);
+  localStorage.setItem('cs_theme', currentTheme);
+  const icon = document.getElementById('sidebarThemeIcon');
+  if (icon) icon.textContent = currentTheme === 'dark' ? 'light_mode' : 'dark_mode';
+}
+
+function toggleTheme() {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  applyTheme();
+  if (currentPanel === 'settings') renderSettingsPanel();
+  if (document.getElementById('settingsScreen')?.classList.contains('active')) renderSettingsScreen();
+}
+
+function setTheme(theme) {
+  currentTheme = theme;
+  applyTheme();
+  if (currentPanel === 'settings') renderSettingsPanel();
+  if (document.getElementById('settingsScreen')?.classList.contains('active')) renderSettingsScreen();
+}
 
 // ---- Google OAuth ----
 let googleLoginReady = false;
@@ -784,6 +1090,13 @@ async function initGoogleLogin() {
       document.getElementById('googleBtnContainer'),
       { theme: 'filled_black', size: 'large', shape: 'pill', text: 'signin_with', width: 208 }
     );
+    const modalContainer = document.getElementById('googleBtnContainerModal');
+    if (modalContainer) {
+      google.accounts.id.renderButton(
+        modalContainer,
+        { theme: 'filled_black', size: 'large', shape: 'pill', text: 'signin_with', width: 280 }
+      );
+    }
     googleLoginReady = true;
   } catch (e) { console.log('Google login unavailable'); }
 }
@@ -796,7 +1109,9 @@ function handleGoogleLogin(response) {
     localStorage.setItem('gsi_token', token);
     const dropdown = document.getElementById('googleLoginDropdown');
     if (dropdown) dropdown.classList.add('hidden');
+    closeLoginModal();
     updateUserUI();
+    renderHistorySection();
   } catch (e) {
     console.error('Google login error:', e);
   }
@@ -807,7 +1122,6 @@ function checkSavedLogin() {
   if (!token) return;
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    // Check expiry
     if (payload.exp * 1000 < Date.now()) {
       localStorage.removeItem('gsi_token');
       return;
@@ -819,7 +1133,6 @@ function checkSavedLogin() {
 
 function updateUserUI() {
   if (!currentUser) return;
-  // Intro nav: hide login button, show profile
   const loginBtn = document.getElementById('loginBtnIntro');
   const profile = document.getElementById('userProfileIntro');
   if (loginBtn) loginBtn.classList.add('hidden');
@@ -830,7 +1143,6 @@ function updateUserUI() {
     document.getElementById('userAvatarIntro').src = currentUser.picture || '';
     document.getElementById('userNameIntro').textContent = currentUser.name || '';
   }
-  // Sidebar avatars
   document.querySelectorAll('.sidebar-avatar').forEach(el => {
     const icon = el.querySelector('.sidebar-avatar-icon');
     const img = el.querySelector('.sidebar-avatar-img');
@@ -843,6 +1155,10 @@ function updateUserUI() {
 }
 
 function toggleUserMenu() {
+  handleLogout();
+}
+
+function handleLogout() {
   if (confirm('로그아웃하시겠습니까?')) {
     localStorage.removeItem('gsi_token');
     currentUser = null;
@@ -850,40 +1166,398 @@ function toggleUserMenu() {
   }
 }
 
-function requireLogin() {
-  if (currentUser) return true;
-  onLoginClick();
-  return false;
+// ---- Login Modal ----
+function openLoginModal() {
+  const modal = document.getElementById('loginModal');
+  if (modal) modal.classList.add('open');
+  if (!googleLoginReady) {
+    const msg = document.getElementById('loginUnavailableMsgModal');
+    if (msg) msg.classList.remove('hidden');
+  }
+}
+
+function closeLoginModal() {
+  const modal = document.getElementById('loginModal');
+  if (modal) modal.classList.remove('open');
+}
+
+function handleSidebarAvatarClick() {
+  if (currentUser) {
+    showScreen('settings');
+  } else {
+    openLoginModal();
+  }
+}
+
+// ---- Sidebar Panels ----
+function toggleSidebarPanel(panelName) {
+  if (currentPanel === panelName) {
+    closeSidebarPanel();
+    return;
+  }
+  closeSidebarPanel();
+  currentPanel = panelName;
+  const panel = document.getElementById(panelName + 'Panel');
+  const backdrop = document.getElementById('panelBackdrop');
+  if (panelName === 'archive') renderArchivePanel();
+  if (panelName === 'settings') renderSettingsPanel();
+  if (panel) panel.classList.add('open');
+  if (backdrop) backdrop.classList.add('open');
+}
+
+function closeSidebarPanel() {
+  currentPanel = null;
+  document.querySelectorAll('.slide-panel').forEach(p => p.classList.remove('open'));
+  const backdrop = document.getElementById('panelBackdrop');
+  if (backdrop) backdrop.classList.remove('open');
+}
+
+function renderArchivePanel() {
+  const container = document.getElementById('archivePanelContent');
+  if (!container) return;
+  if (!currentUser) {
+    container.innerHTML = '<div class="flex flex-col items-center justify-center h-64 text-center">' +
+      '<span class="material-symbols-outlined text-4xl mb-3" style="color:var(--text-muted)">lock</span>' +
+      '<p class="text-sm" style="color:var(--text-secondary)">로그인 후 확인 가능합니다</p>' +
+      '<button onclick="closeSidebarPanel();openLoginModal()" class="mt-4 px-4 py-2 bg-[var(--primary-indigo)] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">로그인</button></div>';
+    return;
+  }
+  const history = JSON.parse(localStorage.getItem('cs_analysis_history') || '[]');
+  if (history.length === 0) {
+    container.innerHTML = '<div class="flex flex-col items-center justify-center h-64 text-center">' +
+      '<span class="material-symbols-outlined text-4xl mb-3" style="color:var(--text-muted)">folder_off</span>' +
+      '<p class="text-sm" style="color:var(--text-secondary)">분석 기록이 없습니다</p>' +
+      '<p class="text-xs mt-1" style="color:var(--text-muted)">계약서를 분석하면 여기에 저장됩니다</p></div>';
+    return;
+  }
+  container.innerHTML = history.map((item, idx) =>
+    '<div onclick="loadHistoryEntry(' + idx + ');closeSidebarPanel()" class="p-3 rounded-lg cursor-pointer transition-colors mb-2" style="border:1px solid var(--border-color);" onmouseover="this.style.background=\'var(--hover-bg)\'" onmouseout="this.style.background=\'transparent\'">' +
+      '<div class="flex items-center justify-between">' +
+        '<div class="flex-1 min-w-0"><p class="text-sm font-medium truncate" style="color:var(--text-primary)">' + item.filename + '</p>' +
+        '<p class="text-xs mt-0.5" style="color:var(--text-muted)">' + item.date + '</p></div>' +
+        '<span class="px-2 py-0.5 rounded text-[10px] font-bold ml-2 ' +
+          (item.riskLevel === 'high' ? 'bg-red-500/10 text-red-400' : item.riskLevel === 'medium' ? 'bg-amber-500/10 text-amber-400' : 'bg-green-500/10 text-green-400') +
+        '">' + item.riskGrade + '</span>' +
+      '</div></div>'
+  ).join('');
+}
+
+function renderSettingsPanel() {
+  const container = document.getElementById('settingsPanelContent');
+  if (!container) return;
+  container.innerHTML =
+    '<div class="space-y-6">' +
+      '<div><h4 class="text-sm font-semibold mb-3" style="color:var(--text-primary)">테마</h4>' +
+        '<div class="flex gap-2">' +
+          '<button onclick="setTheme(\'light\')" class="flex-1 py-2.5 rounded-lg text-sm font-medium border transition-colors ' + (currentTheme === 'light' ? 'bg-[var(--primary-indigo)] text-white border-[var(--primary-indigo)]' : '') + '" style="' + (currentTheme !== 'light' ? 'color:var(--text-secondary);border-color:var(--border-color)' : '') + '">' +
+            '<span class="material-symbols-outlined text-base align-middle mr-1">light_mode</span>라이트</button>' +
+          '<button onclick="setTheme(\'dark\')" class="flex-1 py-2.5 rounded-lg text-sm font-medium border transition-colors ' + (currentTheme === 'dark' ? 'bg-[var(--primary-indigo)] text-white border-[var(--primary-indigo)]' : '') + '" style="' + (currentTheme !== 'dark' ? 'color:var(--text-secondary);border-color:var(--border-color)' : '') + '">' +
+            '<span class="material-symbols-outlined text-base align-middle mr-1">dark_mode</span>다크</button>' +
+        '</div></div>' +
+      '<div><h4 class="text-sm font-semibold mb-3" style="color:var(--text-primary)">계정</h4>' +
+        (currentUser ?
+          '<div class="flex items-center gap-3 p-3 rounded-lg" style="border:1px solid var(--border-color)">' +
+            '<img src="' + currentUser.picture + '" class="w-10 h-10 rounded-full" alt=""/>' +
+            '<div class="flex-1 min-w-0"><p class="text-sm font-medium truncate" style="color:var(--text-primary)">' + currentUser.name + '</p>' +
+            '<p class="text-xs truncate" style="color:var(--text-muted)">' + currentUser.email + '</p></div></div>' +
+            '<button onclick="handleLogout()" class="mt-3 w-full py-2 text-sm text-red-400 hover:text-red-300 rounded-lg hover:bg-red-500/5 transition-colors" style="border:1px solid rgba(239,68,68,0.2)">로그아웃</button>'
+        :
+          '<button onclick="closeSidebarPanel();openLoginModal()" class="w-full py-2.5 bg-[var(--primary-indigo)] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Google로 로그인</button>'
+        ) +
+      '</div>' +
+      '<div><h4 class="text-sm font-semibold mb-3" style="color:var(--text-primary)">데이터</h4>' +
+        '<button onclick="clearHistory()" class="w-full py-2 text-sm rounded-lg transition-colors" style="color:var(--text-secondary);border:1px solid var(--border-color)" onmouseover="this.style.background=\'var(--hover-bg)\'" onmouseout="this.style.background=\'transparent\'">분석 기록 초기화</button></div>' +
+      '<div class="pt-4" style="border-top:1px solid var(--border-color)"><p class="text-xs" style="color:var(--text-muted)">ClearSign v1.0.0</p>' +
+        '<p class="text-xs mt-0.5" style="color:var(--text-muted)">Gemini 3 Seoul Hackathon</p></div>' +
+    '</div>';
+}
+
+// ---- Full-Page Settings Screen ----
+function renderSettingsScreen() {
+  const container = document.getElementById('settingsScreenContent');
+  if (!container) return;
+
+  const levelLabels = { 1: '간단', 2: '보통', 3: '상세' };
+  const levelColors = { 1: 'bg-green-100 text-green-700', 2: 'bg-indigo-100 text-indigo-700', 3: 'bg-purple-100 text-purple-700' };
+
+  container.innerHTML =
+    // ---- Profile Card ----
+    '<div id="settingsProfile" class="rounded-[16px] p-8 border" style="background:var(--bg-card);border-color:var(--border-color);">' +
+      (currentUser ?
+        '<div class="flex items-center gap-5">' +
+          '<img src="' + (currentUser.picture || '') + '" class="w-16 h-16 rounded-full border-2" style="border-color:var(--border-color);" alt="프로필"/>' +
+          '<div class="flex-1 min-w-0">' +
+            '<h3 class="text-xl font-bold truncate" style="color:var(--text-primary);">' + (currentUser.name || '') + '</h3>' +
+            '<p class="text-sm truncate" style="color:var(--text-secondary);">' + (currentUser.email || '') + '</p>' +
+          '</div>' +
+          '<button onclick="handleLogout()" class="px-5 py-2.5 rounded-xl text-sm font-medium border transition-colors" style="color:var(--text-secondary);border-color:var(--border-color);" onmouseover="this.style.background=\'var(--hover-bg)\'" onmouseout="this.style.background=\'transparent\'">' +
+            '<span class="material-symbols-outlined text-base align-middle mr-1">logout</span>로그아웃' +
+          '</button>' +
+        '</div>'
+      :
+        '<div class="flex items-center gap-5">' +
+          '<div class="w-16 h-16 rounded-full flex items-center justify-center" style="background:var(--hover-bg);border:1px solid var(--border-color);">' +
+            '<span class="material-symbols-outlined text-3xl" style="color:var(--text-muted);">person</span>' +
+          '</div>' +
+          '<div class="flex-1">' +
+            '<h3 class="text-lg font-bold" style="color:var(--text-primary);">로그인이 필요합니다</h3>' +
+            '<p class="text-sm" style="color:var(--text-secondary);">Google 계정으로 로그인하여 분석 기록을 저장하세요</p>' +
+          '</div>' +
+          '<button onclick="openLoginModal()" class="px-5 py-2.5 bg-[var(--primary-indigo)] hover:bg-[var(--primary-indigo-hover)] text-white rounded-xl text-sm font-medium transition-colors">' +
+            'Google로 로그인' +
+          '</button>' +
+        '</div>'
+      ) +
+    '</div>' +
+
+    // ---- Theme Card ----
+    '<div class="rounded-[16px] p-8 border" style="background:var(--bg-card);border-color:var(--border-color);">' +
+      '<h3 class="text-base font-bold mb-5 flex items-center gap-2" style="color:var(--text-primary);">' +
+        '<span class="material-symbols-outlined text-xl" style="color:var(--primary-indigo);">palette</span>테마' +
+      '</h3>' +
+      '<div class="flex gap-3">' +
+        '<button onclick="setTheme(\'light\')" class="flex-1 py-3 rounded-xl text-sm font-medium border transition-all ' +
+          (currentTheme === 'light' ? 'bg-[var(--primary-indigo)] text-white border-[var(--primary-indigo)] shadow-lg shadow-indigo-500/20' : '') + '" style="' +
+          (currentTheme !== 'light' ? 'color:var(--text-secondary);border-color:var(--border-color)' : '') + '">' +
+          '<span class="material-symbols-outlined text-base align-middle mr-1.5">light_mode</span>라이트</button>' +
+        '<button onclick="setTheme(\'dark\')" class="flex-1 py-3 rounded-xl text-sm font-medium border transition-all ' +
+          (currentTheme === 'dark' ? 'bg-[var(--primary-indigo)] text-white border-[var(--primary-indigo)] shadow-lg shadow-indigo-500/20' : '') + '" style="' +
+          (currentTheme !== 'dark' ? 'color:var(--text-secondary);border-color:var(--border-color)' : '') + '">' +
+          '<span class="material-symbols-outlined text-base align-middle mr-1.5">dark_mode</span>다크</button>' +
+      '</div>' +
+    '</div>' +
+
+    // ---- Analysis Settings Card ----
+    '<div id="settingsAnalysis" class="rounded-[16px] p-8 border" style="background:var(--bg-card);border-color:var(--border-color);">' +
+      '<h3 class="text-base font-bold mb-5 flex items-center gap-2" style="color:var(--text-primary);">' +
+        '<span class="material-symbols-outlined text-xl" style="color:var(--primary-indigo);">tune</span>분석 설정' +
+      '</h3>' +
+      '<div class="space-y-6">' +
+        // Auto analysis toggle
+        '<div class="flex items-center justify-between">' +
+          '<div>' +
+            '<p class="text-sm font-medium" style="color:var(--text-primary);">자동 분석 시작</p>' +
+            '<p class="text-xs mt-0.5" style="color:var(--text-muted);">파일 업로드 시 즉시 분석을 시작합니다</p>' +
+          '</div>' +
+          '<div class="settings-toggle' + (settingsAutoAnalysis ? ' active' : '') + '" onclick="toggleAutoAnalysis(this)"></div>' +
+        '</div>' +
+        // Easy level slider
+        '<div>' +
+          '<div class="flex items-center justify-between mb-3">' +
+            '<div>' +
+              '<p class="text-sm font-medium" style="color:var(--text-primary);">쉬운 설명 수준</p>' +
+              '<p class="text-xs mt-0.5" style="color:var(--text-muted);">분석 결과의 기본 설명 난이도를 설정합니다</p>' +
+            '</div>' +
+            '<span id="settingsLevelBadge" class="px-2.5 py-1 rounded-full text-xs font-bold ' + (levelColors[settingsEasyLevel] || levelColors[2]) + '">LEVEL ' + settingsEasyLevel + ' · ' + (levelLabels[settingsEasyLevel] || '보통') + '</span>' +
+          '</div>' +
+          '<input type="range" min="1" max="3" step="1" value="' + settingsEasyLevel + '" class="settings-range" oninput="updateEasyLevel(parseInt(this.value))">' +
+          '<div class="flex justify-between mt-1.5 text-xs" style="color:var(--text-muted);">' +
+            '<span>간단</span><span>보통</span><span>상세</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+
+    // ---- Accessibility Card ----
+    '<div id="settingsAccessibility" class="rounded-[16px] p-8 border" style="background:var(--bg-card);border-color:var(--border-color);">' +
+      '<h3 class="text-base font-bold mb-5 flex items-center gap-2" style="color:var(--text-primary);">' +
+        '<span class="material-symbols-outlined text-xl" style="color:var(--primary-indigo);">accessibility_new</span>접근성' +
+      '</h3>' +
+      '<div class="flex items-center justify-between">' +
+        '<div>' +
+          '<p class="text-sm font-medium" style="color:var(--text-primary);">고대비 모드</p>' +
+          '<p class="text-xs mt-0.5" style="color:var(--text-muted);">텍스트와 배경의 대비를 강화하여 가독성을 높입니다</p>' +
+        '</div>' +
+        '<div class="settings-toggle' + (settingsHighContrast ? ' active' : '') + '" onclick="toggleHighContrast(this)"></div>' +
+      '</div>' +
+    '</div>' +
+
+    // ---- Data Management Card ----
+    '<div id="settingsData" class="rounded-[16px] p-8 border" style="background:var(--bg-card);border-color:var(--border-color);">' +
+      '<h3 class="text-base font-bold mb-5 flex items-center gap-2" style="color:var(--text-primary);">' +
+        '<span class="material-symbols-outlined text-xl" style="color:var(--primary-indigo);">database</span>데이터 관리' +
+      '</h3>' +
+      '<div class="space-y-3">' +
+        '<button onclick="clearHistory()" class="w-full py-3 rounded-xl text-sm font-medium border border-red-200 text-red-500 hover:bg-red-50 transition-colors flex items-center justify-center gap-2">' +
+          '<span class="material-symbols-outlined text-base">delete_sweep</span>모든 분석 기록 삭제' +
+        '</button>' +
+        '<button onclick="confirmAccountDeletion()" class="w-full py-3 rounded-xl text-sm font-medium border transition-colors flex items-center justify-center gap-2" style="color:var(--text-muted);border-color:var(--border-color);" onmouseover="this.style.background=\'var(--hover-bg)\'" onmouseout="this.style.background=\'transparent\'">' +
+          '<span class="material-symbols-outlined text-base">person_remove</span>계정 탈퇴' +
+        '</button>' +
+      '</div>' +
+    '</div>' +
+
+    // ---- Footer ----
+    '<div class="text-center py-4">' +
+      '<p class="text-xs" style="color:var(--text-muted);">ClearSign v2.1.0 · <a href="#" class="hover:underline">이용약관</a> · <a href="#" class="hover:underline">개인정보처리방침</a></p>' +
+    '</div>';
+}
+
+function goBackFromSettings() {
+  showScreen(previousScreenName || 'upload');
+}
+
+function toggleAutoAnalysis(el) {
+  settingsAutoAnalysis = !settingsAutoAnalysis;
+  localStorage.setItem('cs_auto_analysis', settingsAutoAnalysis ? 'true' : 'false');
+  el.classList.toggle('active', settingsAutoAnalysis);
+}
+
+function updateEasyLevel(val) {
+  settingsEasyLevel = val;
+  localStorage.setItem('cs_easy_level', val.toString());
+  currentTabLevel = val;
+  const levelLabels = { 1: '간단', 2: '보통', 3: '상세' };
+  const levelColors = { 1: 'bg-green-100 text-green-700', 2: 'bg-indigo-100 text-indigo-700', 3: 'bg-purple-100 text-purple-700' };
+  const badge = document.getElementById('settingsLevelBadge');
+  if (badge) {
+    badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold ' + (levelColors[val] || levelColors[2]);
+    badge.textContent = 'LEVEL ' + val + ' · ' + (levelLabels[val] || '보통');
+  }
+}
+
+function toggleHighContrast(el) {
+  settingsHighContrast = !settingsHighContrast;
+  localStorage.setItem('cs_high_contrast', settingsHighContrast ? 'true' : 'false');
+  el.classList.toggle('active', settingsHighContrast);
+  applyHighContrast();
+}
+
+function applyHighContrast() {
+  document.documentElement.setAttribute('data-high-contrast', settingsHighContrast ? 'true' : 'false');
+}
+
+function confirmAccountDeletion() {
+  if (!confirm('정말로 계정을 탈퇴하시겠습니까?\n모든 분석 기록과 설정이 삭제됩니다.')) return;
+  if (!confirm('이 작업은 되돌릴 수 없습니다. 정말 진행하시겠습니까?')) return;
+  localStorage.removeItem('cs_analysis_history');
+  localStorage.removeItem('cs_theme');
+  localStorage.removeItem('cs_auto_analysis');
+  localStorage.removeItem('cs_easy_level');
+  localStorage.removeItem('cs_high_contrast');
+  localStorage.removeItem('gsi_token');
+  location.reload();
+}
+
+// ---- History ----
+function saveToHistory(data, filename) {
+  if (!currentUser || isDemoMode) return;
+  const history = JSON.parse(localStorage.getItem('cs_analysis_history') || '[]');
+  const entry = {
+    id: Date.now(),
+    filename: filename,
+    date: new Date().toLocaleString('ko-KR'),
+    riskLevel: data.summary?.riskLevel || 'unknown',
+    riskGrade: data.summary?.riskLevel === 'high' ? '위험' : data.summary?.riskLevel === 'medium' ? '주의' : '안전',
+    deviatedCount: data.summary?.deviatedClauseCount || 0,
+    totalCount: data.summary?.totalClauseCount || 0,
+    totalMaxRisk: data.summary?.totalMaxRisk || 0,
+    data: data,
+  };
+  history.unshift(entry);
+  if (history.length > 20) history.pop();
+  localStorage.setItem('cs_analysis_history', JSON.stringify(history));
+}
+
+function renderHistorySection() {
+  const section = document.getElementById('historySection');
+  if (!section) return;
+  if (!currentUser) { section.style.display = 'none'; return; }
+  const history = JSON.parse(localStorage.getItem('cs_analysis_history') || '[]');
+  if (history.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  const list = document.getElementById('historyList');
+  if (!list) return;
+  const recent = history.slice(0, 5);
+  list.innerHTML = recent.map((item, idx) =>
+    '<div onclick="loadHistoryEntry(' + idx + ')" class="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group border border-transparent hover:border-[var(--border-color)]">' +
+      '<div class="flex items-center gap-3">' +
+        '<div class="w-8 h-8 rounded flex items-center justify-center border ' +
+          (item.riskLevel === 'high' ? 'bg-red-500/10 text-red-400 border-red-500/20' : item.riskLevel === 'medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20') + '">' +
+          '<span class="material-symbols-outlined text-sm">description</span></div>' +
+        '<div><p class="text-sm font-medium group-hover:text-indigo-300 transition-colors" style="color:var(--text-primary)">' + item.filename + '</p>' +
+        '<p class="text-xs" style="color:var(--text-muted)">' + item.date + '</p></div></div>' +
+      '<div class="flex items-center gap-2">' +
+        '<span class="px-2 py-1 rounded text-[10px] font-medium border ' +
+          (item.riskLevel === 'high' ? 'bg-red-500/10 text-red-400 border-red-500/20' : item.riskLevel === 'medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20') + '">' +
+          item.riskGrade + '</span>' +
+        '<span class="material-symbols-outlined text-gray-600 group-hover:text-gray-400">chevron_right</span></div></div>'
+  ).join('');
+}
+
+function loadHistoryEntry(idx) {
+  const history = JSON.parse(localStorage.getItem('cs_analysis_history') || '[]');
+  const entry = history[idx];
+  if (!entry) return;
+  isDemoMode = false;
+  uploadedFileUrl = null;
+  uploadedFileType = null;
+  analysisData = entry.data;
+  renderResults(entry.data, entry.filename);
+}
+
+function clearHistory() {
+  if (confirm('모든 분석 기록을 삭제하시겠습니까?')) {
+    localStorage.removeItem('cs_analysis_history');
+    renderHistorySection();
+    if (currentPanel === 'settings') renderSettingsPanel();
+    if (currentPanel === 'archive') renderArchivePanel();
+  }
 }
 
 // ---- Screen Management ----
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const screenMap = { intro: 'introScreen', upload: 'uploadScreen', loading: 'loadingScreen', result: 'resultScreen' };
+  // Track previous screen (only non-settings screens)
+  const currentActive = document.querySelector('.screen.active');
+  if (currentActive && name === 'settings') {
+    const reverseMap = { introScreen: 'intro', uploadScreen: 'upload', loadingScreen: 'loading', resultScreen: 'result' };
+    previousScreenName = reverseMap[currentActive.id] || previousScreenName;
+  }
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const screenMap = { intro: 'introScreen', upload: 'uploadScreen', loading: 'loadingScreen', result: 'resultScreen', settings: 'settingsScreen' };
   const el = document.getElementById(screenMap[name]);
   if (el) el.classList.add('active');
 
-  // Theme switch
-  if (name === 'intro' || name === 'upload') {
-    document.body.className = 'bg-[#0a0a0f] text-white min-h-screen';
-  } else {
-    document.body.className = 'bg-gray-50 text-gray-900 min-h-screen';
-  }
+  // Unified sidebar: show/hide
+  const sidebar = document.getElementById('unifiedSidebar');
+  if (sidebar) sidebar.style.display = name === 'intro' ? 'none' : 'flex';
+
+  // Update sidebar active state
+  updateSidebarActiveState(name);
+
+  // Close any open panels
+  closeSidebarPanel();
+
+  // Render history on upload screen
+  if (name === 'upload') renderHistorySection();
+
+  // Render settings screen
+  if (name === 'settings') renderSettingsScreen();
+}
+
+function updateSidebarActiveState(name) {
+  document.querySelectorAll('.sidebar-nav-btn').forEach(btn => btn.classList.remove('active'));
+  const map = { upload: 'sidebarBtnUpload', loading: 'sidebarBtnUpload', result: 'sidebarBtnUpload', settings: 'sidebarBtnSettings' };
+  const activeBtn = document.getElementById(map[name]);
+  if (activeBtn) activeBtn.classList.add('active');
 }
 
 // ---- File Handling ----
 function handleFileSelect(e) {
   const file = e.target.files[0];
-  if (file) {
-    if (!requireLogin()) { e.target.value = ''; return; }
-    uploadFile(file);
-  }
+  if (file) uploadFile(file);
 }
 
 // Drag and drop
 document.addEventListener('DOMContentLoaded', () => {
   checkSavedLogin();
   initGoogleLogin();
+  applyTheme();
+  applyHighContrast();
+  currentTabLevel = settingsEasyLevel;
+  renderHistorySection();
 
   document.addEventListener('click', (e) => {
     const dropdown = document.getElementById('googleLoginDropdown');
@@ -903,10 +1577,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   dropArea.addEventListener('drop', e => {
     const file = e.dataTransfer.files[0];
-    if (file) {
-      if (!requireLogin()) return;
-      uploadFile(file);
-    }
+    if (file) uploadFile(file);
   });
 });
 
@@ -1014,6 +1685,12 @@ function renderFilePreview() {
         content.innerHTML = `<iframe src="${uploadedFileUrl}" class="w-full h-full border-0" title="원본 PDF"></iframe>`;
       } else if (uploadedFileType && uploadedFileType.startsWith('image/')) {
         content.innerHTML = `<img src="${uploadedFileUrl}" class="max-h-full max-w-full object-contain p-2" alt="원본 이미지"/>`;
+      } else if (uploadedFileType === 'text/html') {
+        content.innerHTML = `<iframe src="${uploadedFileUrl}" sandbox="allow-same-origin" class="w-full h-full border-0 bg-white rounded" title="원본 HTML"></iframe>`;
+      } else if (uploadedFileType && uploadedFileType.startsWith('text/')) {
+        fetch(uploadedFileUrl).then(r => r.text()).then(text => {
+          content.innerHTML = `<pre class="w-full h-full overflow-auto p-4 text-sm text-gray-300 bg-[#0d0d14] rounded whitespace-pre-wrap">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`;
+        });
       } else {
         content.innerHTML = `<div class="text-gray-400 text-sm flex items-center gap-2"><span class="material-symbols-outlined">description</span>파일 미리보기를 지원하지 않는 형식입니다</div>`;
       }
@@ -1075,6 +1752,16 @@ function renderResults(data, filename) {
     // Charts
     renderDeviationChart(data);
     renderRiskChart(data);
+
+    // Comprehension quiz
+    if (data.comprehension) {
+      renderComprehension(data.comprehension);
+    } else {
+      document.getElementById('comprehensionSection').classList.add('hidden');
+    }
+
+    // Save to history
+    saveToHistory(data, filename);
 
     // Show result
     showScreen('result');
@@ -1250,6 +1937,54 @@ function openDetail(idx) {
   // Tab content
   switchTab(1);
 
+  // Structured Breakdown
+  const breakdownSection = document.getElementById('detailBreakdown');
+  const breakdownContent = document.getElementById('detailBreakdownContent');
+  if (clause.structuredBreakdown) {
+    const sb = clause.structuredBreakdown;
+    const fields = [
+      { key: 'who', label: '누가', icon: 'person' },
+      { key: 'what', label: '무엇을', icon: 'description' },
+      { key: 'when', label: '언제', icon: 'schedule' },
+      { key: 'condition', label: '조건', icon: 'rule' },
+      { key: 'result', label: '결과', icon: 'check_circle' },
+      { key: 'risk', label: '위험', icon: 'warning' },
+    ];
+    breakdownContent.innerHTML = fields
+      .filter(f => sb[f.key])
+      .map(f => `
+        <div class="flex items-start gap-3">
+          <span class="material-symbols-outlined text-sm ${f.key === 'risk' ? 'text-red-500' : 'text-indigo-400'} mt-0.5">${f.icon}</span>
+          <div>
+            <span class="text-xs font-bold ${f.key === 'risk' ? 'text-red-600' : 'text-indigo-600'}">${f.label}</span>
+            <p class="text-sm text-gray-700">${sb[f.key]}</p>
+          </div>
+        </div>
+      `).join('');
+    breakdownSection.classList.remove('hidden');
+  } else {
+    breakdownSection.classList.add('hidden');
+  }
+
+  // Term Glossary
+  const glossarySection = document.getElementById('detailGlossary');
+  const glossaryContent = document.getElementById('detailGlossaryContent');
+  if (clause.termGlossary && clause.termGlossary.length > 0) {
+    glossaryContent.innerHTML = clause.termGlossary.map(term => `
+      <div class="bg-purple-50/50 border border-purple-100 rounded-xl p-3">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-sm font-bold text-purple-700">${term.original}</span>
+          <span class="material-symbols-outlined text-xs text-gray-400">arrow_forward</span>
+          <span class="text-sm font-medium text-purple-600">${term.simple}</span>
+        </div>
+        ${term.context ? `<p class="text-xs text-gray-500 ml-0.5">${term.context}</p>` : ''}
+      </div>
+    `).join('');
+    glossarySection.classList.remove('hidden');
+  } else {
+    glossarySection.classList.add('hidden');
+  }
+
   // Show detail panel, hide default
   document.getElementById('panelDefault').classList.add('hidden');
   document.getElementById('panelDetail').classList.remove('hidden');
@@ -1357,9 +2092,156 @@ function copyAction() {
   });
 }
 
+// ---- Comprehension Quiz ----
+function renderComprehension(comp) {
+  const section = document.getElementById('comprehensionSection');
+  const container = document.getElementById('comprehensionContent');
+  container.innerHTML = '';
+
+  let hasContent = false;
+
+  // Cloze Questions
+  if (comp.clozeQuestions && comp.clozeQuestions.length > 0) {
+    hasContent = true;
+    const clozeHtml = comp.clozeQuestions.map((cq, idx) => `
+      <div class="bg-white rounded-xl border border-gray-200 p-5" id="cloze-${idx}">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-600">빈칸 채우기</span>
+          <span class="text-xs text-gray-400">${cq.clauseNumber || ''}</span>
+        </div>
+        <p class="text-sm text-gray-800 leading-relaxed mb-3">${(cq.sentence || cq.question || '').replace(/___/g, '<span class="inline-block w-24 border-b-2 border-indigo-300 mx-1"></span>')}</p>
+        <div class="flex items-center gap-2">
+          <input type="text" class="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none" placeholder="답을 입력하세요" id="cloze-input-${idx}" onkeydown="if(event.key==='Enter')checkClozeAnswer(${idx})">
+          <button onclick="checkClozeAnswer(${idx})" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm rounded-lg font-medium transition-colors">확인</button>
+        </div>
+        <div id="cloze-feedback-${idx}" class="mt-2 text-sm hidden"></div>
+      </div>
+    `).join('');
+    container.innerHTML += clozeHtml;
+  }
+
+  // Scenario Questions
+  if (comp.scenarioQuestions && comp.scenarioQuestions.length > 0) {
+    hasContent = true;
+    const scenarioHtml = comp.scenarioQuestions.map((sq, qIdx) => `
+      <div class="bg-white rounded-xl border border-gray-200 p-5" id="scenario-${qIdx}">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-600">상황 문제</span>
+          <span class="text-xs text-gray-400">${sq.clauseNumber || ''}</span>
+        </div>
+        <p class="text-sm text-gray-700 leading-relaxed mb-2 bg-gray-50 rounded-lg p-3">${sq.scenario || ''}</p>
+        <p class="text-sm font-medium text-gray-800 mb-3">${sq.question || ''}</p>
+        <div class="space-y-2">
+          ${(sq.choices || []).map(ch => `
+            <label class="scenario-choice flex items-start gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors" id="scenario-${qIdx}-${ch.label}" onclick="selectScenarioAnswer(${qIdx}, '${ch.label}')">
+              <input type="radio" name="scenario-${qIdx}" value="${ch.label}" class="mt-0.5 text-indigo-500 focus:ring-indigo-400">
+              <div>
+                <span class="text-sm font-medium text-gray-700">${ch.label}.</span>
+                <span class="text-sm text-gray-600">${ch.text}</span>
+              </div>
+            </label>
+          `).join('')}
+        </div>
+        <div id="scenario-feedback-${qIdx}" class="mt-3 text-sm hidden"></div>
+      </div>
+    `).join('');
+    container.innerHTML += scenarioHtml;
+  }
+
+  // Recall Questions
+  if (comp.recallQuestions && comp.recallQuestions.length > 0) {
+    hasContent = true;
+    const recallHtml = comp.recallQuestions.map((rq, rIdx) => `
+      <div class="bg-white rounded-xl border border-gray-200 p-5" id="recall-${rIdx}">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-600">핵심 회상</span>
+        </div>
+        <p class="text-sm font-medium text-gray-800 mb-3">${rq.question || ''}</p>
+        <div class="space-y-2">
+          ${(rq.goldStandardIdeas || []).map((idea, iIdx) => `
+            <label class="flex items-start gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+              <input type="checkbox" class="mt-0.5 rounded text-green-500 focus:ring-green-400" id="recall-${rIdx}-${iIdx}">
+              <span class="text-sm text-gray-700">${idea}</span>
+            </label>
+          `).join('')}
+        </div>
+        ${rq.scoringNote ? `<p class="text-xs text-gray-400 mt-3">${rq.scoringNote}</p>` : ''}
+      </div>
+    `).join('');
+    container.innerHTML += recallHtml;
+  }
+
+  if (hasContent) {
+    section.classList.remove('hidden');
+  } else {
+    section.classList.add('hidden');
+  }
+}
+
+function checkClozeAnswer(idx) {
+  const input = document.getElementById(`cloze-input-${idx}`);
+  const feedback = document.getElementById(`cloze-feedback-${idx}`);
+  if (!input || !feedback || !analysisData?.comprehension?.clozeQuestions) return;
+
+  const cq = analysisData.comprehension.clozeQuestions[idx];
+  if (!cq) return;
+
+  const userAnswer = input.value.trim();
+  if (!userAnswer) return;
+
+  const correct = cq.answer || '';
+  const synonyms = cq.acceptableSynonyms || [];
+  const allAcceptable = [correct, ...synonyms].map(s => s.toLowerCase().trim());
+
+  const isCorrect = allAcceptable.some(a => userAnswer.toLowerCase().includes(a) || a.includes(userAnswer.toLowerCase()));
+
+  feedback.classList.remove('hidden');
+  if (isCorrect) {
+    feedback.innerHTML = '<span class="text-green-600 font-medium flex items-center gap-1"><span class="material-symbols-outlined text-base">check_circle</span> 정답! ' + correct + '</span>';
+    input.classList.add('border-green-300', 'bg-green-50');
+  } else {
+    feedback.innerHTML = '<span class="text-red-500 font-medium flex items-center gap-1"><span class="material-symbols-outlined text-base">cancel</span> 정답: ' + correct + '</span>';
+    input.classList.add('border-red-300', 'bg-red-50');
+  }
+}
+
+function selectScenarioAnswer(qIdx, choice) {
+  const feedback = document.getElementById(`scenario-feedback-${qIdx}`);
+  if (!feedback || !analysisData?.comprehension?.scenarioQuestions) return;
+
+  const sq = analysisData.comprehension.scenarioQuestions[qIdx];
+  if (!sq) return;
+
+  const isCorrect = choice === sq.correctAnswer;
+
+  // Highlight choices
+  (sq.choices || []).forEach(ch => {
+    const el = document.getElementById(`scenario-${qIdx}-${ch.label}`);
+    if (!el) return;
+    el.classList.remove('border-green-300', 'bg-green-50', 'border-red-300', 'bg-red-50');
+    if (ch.label === sq.correctAnswer) {
+      el.classList.add('border-green-300', 'bg-green-50');
+    } else if (ch.label === choice && !isCorrect) {
+      el.classList.add('border-red-300', 'bg-red-50');
+    }
+  });
+
+  feedback.classList.remove('hidden');
+  if (isCorrect) {
+    feedback.innerHTML = '<span class="text-green-600 font-medium flex items-center gap-1"><span class="material-symbols-outlined text-base">check_circle</span> 정답!</span>' +
+      (sq.explanation ? '<p class="text-xs text-gray-500 mt-1">' + sq.explanation + '</p>' : '');
+  } else {
+    feedback.innerHTML = '<span class="text-red-500 font-medium flex items-center gap-1"><span class="material-symbols-outlined text-base">cancel</span> 오답</span>' +
+      (sq.explanation ? '<p class="text-xs text-gray-500 mt-1">' + sq.explanation + '</p>' : '');
+  }
+}
+
 // ---- Keyboard ----
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    if (document.getElementById('loginModal')?.classList.contains('open')) { closeLoginModal(); return; }
+    if (document.getElementById('settingsScreen')?.classList.contains('active')) { goBackFromSettings(); return; }
+    if (currentPanel) { closeSidebarPanel(); return; }
     if (currentClauseIdx >= 0) closePanelDetail();
   }
 });
