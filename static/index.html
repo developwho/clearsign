@@ -545,26 +545,13 @@ tailwind.config = {
     </div>
     <div class="hidden md:flex gap-6 text-sm text-gray-400 items-center">
       <a class="hover:text-white transition-colors cursor-pointer" onclick="showScreen('serviceIntro')">서비스 소개</a>
-      <a class="hover:text-white transition-colors cursor-pointer">요금제</a>
       <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-white/10 transition-colors" title="테마 전환">
         <span class="material-symbols-outlined text-lg">light_mode</span>
       </button>
-      <!-- Google Login / User Profile -->
-      <div id="loginBtnIntro" class="relative">
-        <button onclick="onLoginClick()" class="hover:text-white transition-colors flex items-center gap-1.5">
-          <span class="material-symbols-outlined text-lg">person</span>
-          로그인
-        </button>
-        <div id="googleLoginDropdown" class="hidden absolute right-0 top-10 bg-[#1a1a2e] border border-indigo-500/30 rounded-xl p-4 shadow-2xl min-w-[240px] z-50">
-          <p class="text-xs text-gray-400 mb-3">Google 계정으로 로그인</p>
-          <div id="googleBtnContainer"></div>
-          <p id="loginUnavailableMsg" class="hidden text-xs text-red-400 mt-2">Google 로그인이 비활성화되었습니다. 관리자 설정이 필요합니다.</p>
-        </div>
-      </div>
-      <div id="userProfileIntro" class="hidden flex items-center gap-2 cursor-pointer" onclick="toggleUserMenu()">
-        <img id="userAvatarIntro" class="w-8 h-8 rounded-full border border-indigo-500/30" src="" alt=""/>
-        <span id="userNameIntro" class="text-white text-sm font-medium"></span>
-      </div>
+      <!-- Login elements hidden (kept for DOM compat) -->
+      <div id="loginBtnIntro" class="hidden"></div>
+      <div id="googleLoginDropdown" class="hidden"><div id="googleBtnContainer"></div><p id="loginUnavailableMsg" class="hidden"></p></div>
+      <div id="userProfileIntro" class="hidden"><img id="userAvatarIntro" src="" alt=""/><span id="userNameIntro"></span></div>
     </div>
   </nav>
 
@@ -1275,7 +1262,7 @@ tailwind.config = {
         <div id="filePreviewContent" class="flex-1 overflow-auto bg-gray-50"></div>
       </div>
       <!-- Show preview button (visible when panel is hidden) -->
-      <button id="showPreviewBtn" onclick="togglePreviewPanel()" class="hidden flex-shrink-0 w-10 bg-white border-r border-gray-200 flex flex-col items-center justify-center hover:bg-gray-50 transition-colors group" title="원본 미리보기 열기">
+      <button id="showPreviewBtn" onclick="togglePreviewPanel()" class="flex-shrink-0 w-10 bg-white border-r border-gray-200 items-center justify-center hover:bg-gray-50 transition-colors group" style="display:none;flex-direction:column;" title="원본 미리보기 열기">
         <span class="material-symbols-outlined text-gray-400 group-hover:text-indigo-500 text-base">chevron_right</span>
         <span class="text-[10px] text-gray-400 group-hover:text-indigo-500 writing-mode-vertical" style="writing-mode:vertical-rl;">원본</span>
       </button>
@@ -1502,6 +1489,7 @@ let deviationChartInstance = null;
 let riskChartInstance = null;
 let uploadedFileUrl = null;
 let uploadedFileType = null;
+let lastFileName = null;
 let isDemoMode = false;
 let currentUser = null;
 let filePreviewOpen = true;
@@ -1727,13 +1715,6 @@ function closeSidebarPanel() {
 function renderArchivePanel() {
   const container = document.getElementById('archivePanelContent');
   if (!container) return;
-  if (!currentUser) {
-    container.innerHTML = '<div class="flex flex-col items-center justify-center h-64 text-center">' +
-      '<span class="material-symbols-outlined text-4xl mb-3" style="color:var(--text-muted)">lock</span>' +
-      '<p class="text-sm" style="color:var(--text-secondary)">로그인 후 확인 가능합니다</p>' +
-      '<button onclick="closeSidebarPanel();openLoginModal()" class="mt-4 px-4 py-2 bg-[var(--primary-indigo)] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">로그인</button></div>';
-    return;
-  }
   const history = getHistoryEntries();
   if (history.length === 0) {
     container.innerHTML = '<div class="flex flex-col items-center justify-center h-64 text-center">' +
@@ -1952,8 +1933,8 @@ function confirmAccountDeletion() {
 
 // ---- History ----
 function getHistoryStorageKey() {
-  if (!currentUser?.id) return null;
-  return 'cs_analysis_history_' + currentUser.id;
+  const uid = currentUser?.id || 'guest';
+  return 'cs_analysis_history_' + uid;
 }
 
 function getHistoryEntries() {
@@ -1980,7 +1961,7 @@ function clearCurrentUserHistory() {
 }
 
 function saveToHistory(data, filename) {
-  if (!currentUser || isDemoMode) return;
+  if (isDemoMode) return;
   const history = getHistoryEntries();
   const entry = {
     id: Date.now(),
@@ -2131,6 +2112,7 @@ async function uploadFile(file) {
   isDemoMode = false;
   uploadedFileUrl = URL.createObjectURL(file);
   uploadedFileType = file.type;
+  lastFileName = file.name;
 
   loadingStartTime = Date.now();
   showScreen('loading');
@@ -2176,6 +2158,7 @@ async function loadDemo() {
   isDemoMode = true;
   uploadedFileUrl = null;
   uploadedFileType = null;
+  lastFileName = null;
 
   loadingStartTime = Date.now();
   showScreen('loading');
@@ -2253,7 +2236,7 @@ function renderFilePreview() {
 
   if (isDemoMode) {
     panel.classList.add('hidden');
-    showBtn.classList.add('hidden');
+    showBtn.style.display = 'none';
     demoBanner.classList.remove('hidden');
     demoTag.classList.remove('hidden');
   } else {
@@ -2261,7 +2244,7 @@ function renderFilePreview() {
     demoTag.classList.add('hidden');
     if (uploadedFileUrl) {
       panel.classList.remove('hidden');
-      showBtn.classList.add('hidden');
+      showBtn.style.display = 'none';
       content.innerHTML = '';
       if (panelFileName) panelFileName.textContent = lastFileName || '원본 파일';
       if (uploadedFileType === 'application/pdf') {
@@ -2281,7 +2264,7 @@ function renderFilePreview() {
       }
     } else {
       panel.classList.add('hidden');
-      showBtn.classList.add('hidden');
+      showBtn.style.display = 'none';
     }
   }
 }
@@ -2293,12 +2276,11 @@ function togglePreviewPanel() {
   if (isVisible) {
     panel.classList.add('hidden');
     if (uploadedFileUrl && !isDemoMode) {
-      showBtn.classList.remove('hidden');
       showBtn.style.display = 'flex';
     }
   } else {
     panel.classList.remove('hidden');
-    showBtn.classList.add('hidden');
+    showBtn.style.display = 'none';
   }
 }
 
