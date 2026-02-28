@@ -144,7 +144,7 @@ async def run_adk_pipeline(file_bytes: bytes, mime_type: str) -> dict | None:
         ):
             if event.is_final_response() and event.content and event.content.parts:
                 result_text = event.content.parts[0].text
-                break
+                # break하지 않고 파이프라인 전체가 끝날 때까지 진행
 
         # If no final response text, try session state
         if not result_text:

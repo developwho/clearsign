@@ -205,13 +205,12 @@ def analyzer_instruction(context):
 
 analyzer_agent = Agent(
     name="risk_analyzer",
-    model=MODEL_PRO,
+    model=MODEL_FLASH,  # pro는 tools+async에서 타임아웃 발생
     instruction=analyzer_instruction,
     tools=[get_standard_contract, calculate_risk_amount],
     generate_content_config=types.GenerateContentConfig(
         temperature=0.2,
-        thinking_config=types.ThinkingConfig(thinking_budget=10000),
-        response_mime_type="application/json",
+        # response_mime_type은 tools와 함께 사용 불가 (ADK 제약)
     ),
     output_key="risk_analysis",
 )
@@ -437,7 +436,7 @@ action_agent = Agent(
     tools=[route_action],
     generate_content_config=types.GenerateContentConfig(
         temperature=0.5,
-        response_mime_type="application/json",
+        # response_mime_type은 tools와 함께 사용 불가 (ADK 제약)
     ),
     output_key="final_result",
 )
@@ -533,7 +532,7 @@ verifier_agent = Agent(
     tools=[generate_cloze_scoring_rubric],
     generate_content_config=types.GenerateContentConfig(
         temperature=0.3,
-        response_mime_type="application/json",
+        # response_mime_type은 tools와 함께 사용 불가 (ADK 제약)
     ),
     output_key="verified_result",
 )
