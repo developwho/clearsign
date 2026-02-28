@@ -6,6 +6,7 @@
 <title>ClearSign — 임대차 계약서 위험 분석 AI</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet"/>
 <script>
@@ -104,6 +105,75 @@ tailwind.config = {
     background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
     animation: shimmer 1.5s infinite;
   }
+
+  /* Grammarly-style annotation: danger */
+  .annotation-danger {
+    background: linear-gradient(to bottom, transparent 60%, rgba(239,68,68,0.12) 60%);
+    text-decoration: underline wavy #EF4444;
+    text-decoration-skip-ink: none;
+    text-underline-offset: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .annotation-danger:hover {
+    background: linear-gradient(to bottom, transparent 50%, rgba(239,68,68,0.18) 50%);
+  }
+  /* Grammarly-style annotation: caution */
+  .annotation-caution {
+    background: linear-gradient(to bottom, transparent 60%, rgba(245,158,11,0.10) 60%);
+    text-decoration: underline wavy #F59E0B;
+    text-decoration-skip-ink: none;
+    text-underline-offset: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .annotation-caution:hover {
+    background: linear-gradient(to bottom, transparent 50%, rgba(245,158,11,0.16) 50%);
+  }
+  /* Margin marker badge */
+  .annotation-marker {
+    position: absolute; right: -36px; top: 8px;
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: transform 0.15s;
+  }
+  .annotation-marker:hover { transform: scale(1.15); }
+  /* Hover tooltip */
+  .annotation-tooltip {
+    position: absolute; bottom: calc(100% + 8px); left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937; color: #fff;
+    padding: 8px 14px; border-radius: 10px;
+    font-size: 13px; line-height: 1.5;
+    max-width: 320px; white-space: normal;
+    opacity: 0; transition: opacity 0.2s;
+    pointer-events: none; z-index: 30;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  }
+  .annotation-tooltip::after {
+    content: ''; position: absolute; top: 100%; left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent; border-top-color: #1f2937;
+  }
+  .annotation-danger:hover .annotation-tooltip,
+  .annotation-caution:hover .annotation-tooltip { opacity: 1; }
+  /* Pulse highlight for scroll-to */
+  @keyframes clause-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(99,102,241,0); }
+  }
+  .clause-pulse { animation: clause-pulse 0.8s ease-out 2; }
+  /* Demo banner */
+  .demo-banner {
+    background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
+    border: 1px dashed #818CF8;
+  }
+  /* File preview collapse */
+  .file-preview-container { transition: max-height 0.3s ease; overflow: hidden; }
 </style>
 </head>
 
@@ -126,10 +196,25 @@ tailwind.config = {
       </div>
       <span class="font-bold text-xl tracking-tight">ClearSign</span>
     </div>
-    <div class="hidden md:flex gap-6 text-sm text-gray-400">
+    <div class="hidden md:flex gap-6 text-sm text-gray-400 items-center">
       <a class="hover:text-white transition-colors cursor-pointer" onclick="showScreen('upload')">서비스 소개</a>
       <a class="hover:text-white transition-colors cursor-pointer">요금제</a>
-      <a class="hover:text-white transition-colors cursor-pointer">로그인</a>
+      <!-- Google Login / User Profile -->
+      <div id="loginBtnIntro" class="relative">
+        <button onclick="onLoginClick()" class="hover:text-white transition-colors flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-lg">person</span>
+          로그인
+        </button>
+        <div id="googleLoginDropdown" class="hidden absolute right-0 top-10 bg-[#1a1a2e] border border-indigo-500/30 rounded-xl p-4 shadow-2xl min-w-[240px] z-50">
+          <p class="text-xs text-gray-400 mb-3">Google 계정으로 로그인</p>
+          <div id="googleBtnContainer"></div>
+          <p id="loginUnavailableMsg" class="hidden text-xs text-red-400 mt-2">Google 로그인을 사용할 수 없습니다.</p>
+        </div>
+      </div>
+      <div id="userProfileIntro" class="hidden flex items-center gap-2 cursor-pointer" onclick="toggleUserMenu()">
+        <img id="userAvatarIntro" class="w-8 h-8 rounded-full border border-indigo-500/30" src="" alt=""/>
+        <span id="userNameIntro" class="text-white text-sm font-medium"></span>
+      </div>
     </div>
   </nav>
 
@@ -195,10 +280,11 @@ tailwind.config = {
           <div class="relative space-y-4 mb-8">
             <div class="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-red-500/50 to-transparent"></div>
             <h3 class="text-sm text-gray-500 font-mono mb-2 uppercase tracking-wider">Before Analysis</h3>
-            <div class="serif-text text-gray-400 space-y-3 text-sm leading-relaxed scrambled-text select-none">
-              <p>제4조(보증금 반환) 임대인은 임대차기간이 만료되어 █임차인으로부터 ███ 수령하는 즉시... 본 계약의 특약사항에 의거하여 제 █항의 규정은 배제되며...</p>
-              <p>임차인의 과실로 인한 파손 및 훼손에 대해서는 원상복구의 의무를 가지며, 이는 통상적인 마모를 ██하지 아니한다. 단, 천재지변에 의한...</p>
+            <div class="serif-text text-gray-400 space-y-3 text-sm leading-relaxed scrambled-text select-none" lang="ja">
+              <p>第4条（敷金返還） 賃貸人は 賃貸借期間が 満了되어 賃借人으로부터 敷金을 受領하는 即時... 本 契約의 特約事項에 依據하여 第█項의 規定은 排除되며...</p>
+              <p>賃借人の 過失로 인한 破損 및 毀損에 대해서는 原状復旧의 義務를 가지며, 이는 通常的인 磨耗를 包含하지 아니한다. 但, 天災地変에 의한...</p>
             </div>
+            <p class="text-[11px] text-indigo-400/60 italic mt-1">이것이 농인이 보는 계약서입니다. 글자는 보입니다. 의미는 도달하지 않습니다.</p>
             <div class="absolute inset-0 bg-gradient-to-b from-transparent via-indigo-500/10 to-transparent h-[100px] w-full animate-scan pointer-events-none border-b border-indigo-500/30"></div>
           </div>
           <!-- AI preview -->
@@ -257,9 +343,10 @@ tailwind.config = {
         <span class="absolute left-14 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-gray-700 z-50">설정</span>
       </button>
     </nav>
-    <div class="mt-auto">
+    <div class="mt-auto sidebar-avatar">
       <div class="w-10 h-10 rounded-full bg-gray-800 overflow-hidden border border-gray-700 flex items-center justify-center text-gray-500">
-        <span class="material-symbols-outlined">person</span>
+        <span class="material-symbols-outlined sidebar-avatar-icon">person</span>
+        <img class="sidebar-avatar-img hidden w-full h-full object-cover" src="" alt=""/>
       </div>
     </div>
   </aside>
@@ -467,9 +554,10 @@ tailwind.config = {
         <span class="material-symbols-outlined">settings</span>
       </button>
     </nav>
-    <div class="mt-auto">
+    <div class="mt-auto sidebar-avatar">
       <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-gray-300 flex items-center justify-center text-gray-400">
-        <span class="material-symbols-outlined">person</span>
+        <span class="material-symbols-outlined sidebar-avatar-icon">person</span>
+        <img class="sidebar-avatar-img hidden w-full h-full object-cover" src="" alt=""/>
       </div>
     </div>
   </aside>
@@ -480,6 +568,7 @@ tailwind.config = {
     <div class="px-8 py-4 bg-white border-b border-gray-200 flex items-center justify-between flex-shrink-0">
       <div class="flex items-center gap-3">
         <span class="material-symbols-outlined text-gray-400">description</span>
+        <span id="resultDemoTag" class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-600 hidden">데모</span>
         <span id="resultFileName" class="text-sm font-medium text-gray-700">2024년 2월 주택임대차계약서.pdf</span>
         <span id="resultRiskBadge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-600">위험</span>
       </div>
@@ -495,7 +584,29 @@ tailwind.config = {
     <div class="flex-1 flex overflow-hidden">
       <!-- LEFT: Contract document viewer -->
       <div class="flex-1 overflow-y-auto custom-scroll p-8" id="contractViewer">
-        <div class="max-w-2xl mx-auto">
+        <div class="max-w-2xl mx-auto pr-10">
+          <!-- Demo mode banner (hidden by default) -->
+          <div id="demoBanner" class="demo-banner rounded-xl p-4 mb-6 hidden">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-indigo-500 text-xl">science</span>
+              <div>
+                <p class="text-sm font-bold text-indigo-700">데모 모드</p>
+                <p class="text-xs text-indigo-500">샘플 위험 계약서로 분석 결과를 미리 확인합니다</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- File preview (collapsible, only for real uploads) -->
+          <div id="filePreviewSection" class="mb-6 hidden">
+            <button onclick="toggleFilePreview()" class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-2 transition-colors">
+              <span class="material-symbols-outlined text-base" id="filePreviewToggleIcon">expand_more</span>
+              <span>원본 파일 미리보기</span>
+            </button>
+            <div id="filePreviewContainer" class="file-preview-container max-h-[200px] rounded-xl border border-gray-200 overflow-hidden bg-white">
+              <div id="filePreviewContent" class="w-full h-[200px] flex items-center justify-center"></div>
+            </div>
+          </div>
+
           <h2 class="text-xl font-bold text-gray-900 mb-1">부동산임대차계약서</h2>
           <p class="text-sm text-gray-400 mb-6">국토교통부 표준 계약서 기준 분석 결과</p>
           <!-- Summary cards -->
@@ -513,7 +624,7 @@ tailwind.config = {
               <p id="summaryMaxRisk" class="text-2xl font-bold text-red-500">-</p>
             </div>
           </div>
-          <!-- Clauses rendered here -->
+          <!-- Clauses rendered here (Grammarly annotation view) -->
           <div id="clauseList" class="space-y-1"></div>
         </div>
       </div>
@@ -643,6 +754,107 @@ let currentClauseIdx = -1;
 let currentTabLevel = 1;
 let deviationChartInstance = null;
 let riskChartInstance = null;
+let uploadedFileUrl = null;
+let uploadedFileType = null;
+let isDemoMode = false;
+let currentUser = null;
+let filePreviewOpen = true;
+let loadingStartTime = 0;
+
+// ---- Google OAuth ----
+let googleLoginReady = false;
+
+function onLoginClick() {
+  const dropdown = document.getElementById('googleLoginDropdown');
+  const msg = document.getElementById('loginUnavailableMsg');
+  dropdown.classList.toggle('hidden');
+  if (!googleLoginReady && msg) msg.classList.remove('hidden');
+}
+
+async function initGoogleLogin() {
+  try {
+    const res = await fetch('/api/config');
+    const cfg = await res.json();
+    if (!cfg.googleClientId) return;
+    google.accounts.id.initialize({
+      client_id: cfg.googleClientId,
+      callback: handleGoogleLogin,
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('googleBtnContainer'),
+      { theme: 'filled_black', size: 'large', shape: 'pill', text: 'signin_with', width: 208 }
+    );
+    googleLoginReady = true;
+  } catch (e) { console.log('Google login unavailable'); }
+}
+
+function handleGoogleLogin(response) {
+  try {
+    const token = response.credential;
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    currentUser = { name: payload.name, picture: payload.picture, email: payload.email };
+    localStorage.setItem('gsi_token', token);
+    const dropdown = document.getElementById('googleLoginDropdown');
+    if (dropdown) dropdown.classList.add('hidden');
+    updateUserUI();
+  } catch (e) {
+    console.error('Google login error:', e);
+  }
+}
+
+function checkSavedLogin() {
+  const token = localStorage.getItem('gsi_token');
+  if (!token) return;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    // Check expiry
+    if (payload.exp * 1000 < Date.now()) {
+      localStorage.removeItem('gsi_token');
+      return;
+    }
+    currentUser = { name: payload.name, picture: payload.picture, email: payload.email };
+    updateUserUI();
+  } catch { localStorage.removeItem('gsi_token'); }
+}
+
+function updateUserUI() {
+  if (!currentUser) return;
+  // Intro nav: hide login button, show profile
+  const loginBtn = document.getElementById('loginBtnIntro');
+  const profile = document.getElementById('userProfileIntro');
+  if (loginBtn) loginBtn.classList.add('hidden');
+  const dropdown = document.getElementById('googleLoginDropdown');
+  if (dropdown) dropdown.classList.add('hidden');
+  if (profile) {
+    profile.classList.remove('hidden');
+    document.getElementById('userAvatarIntro').src = currentUser.picture || '';
+    document.getElementById('userNameIntro').textContent = currentUser.name || '';
+  }
+  // Sidebar avatars
+  document.querySelectorAll('.sidebar-avatar').forEach(el => {
+    const icon = el.querySelector('.sidebar-avatar-icon');
+    const img = el.querySelector('.sidebar-avatar-img');
+    if (icon && img && currentUser.picture) {
+      icon.classList.add('hidden');
+      img.src = currentUser.picture;
+      img.classList.remove('hidden');
+    }
+  });
+}
+
+function toggleUserMenu() {
+  if (confirm('로그아웃하시겠습니까?')) {
+    localStorage.removeItem('gsi_token');
+    currentUser = null;
+    location.reload();
+  }
+}
+
+function requireLogin() {
+  if (currentUser) return true;
+  onLoginClick();
+  return false;
+}
 
 // ---- Screen Management ----
 function showScreen(name) {
@@ -662,11 +874,25 @@ function showScreen(name) {
 // ---- File Handling ----
 function handleFileSelect(e) {
   const file = e.target.files[0];
-  if (file) uploadFile(file);
+  if (file) {
+    if (!requireLogin()) { e.target.value = ''; return; }
+    uploadFile(file);
+  }
 }
 
 // Drag and drop
 document.addEventListener('DOMContentLoaded', () => {
+  checkSavedLogin();
+  initGoogleLogin();
+
+  document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('googleLoginDropdown');
+    const loginBtn = document.getElementById('loginBtnIntro');
+    if (dropdown && loginBtn && !loginBtn.contains(e.target)) {
+      dropdown.classList.add('hidden');
+    }
+  });
+
   const dropArea = document.getElementById('dropArea');
   if (!dropArea) return;
   ['dragenter','dragover'].forEach(ev => {
@@ -677,12 +903,20 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   dropArea.addEventListener('drop', e => {
     const file = e.dataTransfer.files[0];
-    if (file) uploadFile(file);
+    if (file) {
+      if (!requireLogin()) return;
+      uploadFile(file);
+    }
   });
 });
 
 // ---- Upload ----
 async function uploadFile(file) {
+  isDemoMode = false;
+  uploadedFileUrl = URL.createObjectURL(file);
+  uploadedFileType = file.type;
+
+  loadingStartTime = Date.now();
   showScreen('loading');
   animateLoading();
 
@@ -697,7 +931,6 @@ async function uploadFile(file) {
     renderResults(data, file.name);
   } catch (err) {
     console.error('Upload failed:', err);
-    // Triple fallback: try static file
     try {
       const res2 = await fetch('/static/fallback.json');
       const data2 = await res2.json();
@@ -712,6 +945,11 @@ async function uploadFile(file) {
 
 // ---- Demo ----
 async function loadDemo() {
+  isDemoMode = true;
+  uploadedFileUrl = null;
+  uploadedFileType = null;
+
+  loadingStartTime = Date.now();
   showScreen('loading');
   animateLoading();
 
@@ -720,13 +958,13 @@ async function loadDemo() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     analysisData = data;
-    renderResults(data, '2024년 2월 주택임대차계약서.pdf');
+    renderResults(data, '[데모] 주택임대차계약서 샘플');
   } catch {
     try {
       const res2 = await fetch('/static/fallback.json');
       const data2 = await res2.json();
       analysisData = data2;
-      renderResults(data2, '2024년 2월 주택임대차계약서.pdf');
+      renderResults(data2, '[데모] 주택임대차계약서 샘플');
     } catch {
       alert('데모 데이터를 불러올 수 없습니다.');
       showScreen('intro');
@@ -751,13 +989,59 @@ function animateLoading() {
     setTimeout(() => {
       bar.style.width = s.pct + '%';
       if (statusText) statusText.textContent = s.text;
-    }, (i + 1) * 800);
+    }, (i + 1) * 400);
   });
+}
+
+// ---- File Preview ----
+function renderFilePreview() {
+  const section = document.getElementById('filePreviewSection');
+  const content = document.getElementById('filePreviewContent');
+  const demoBanner = document.getElementById('demoBanner');
+  const demoTag = document.getElementById('resultDemoTag');
+
+  if (isDemoMode) {
+    section.classList.add('hidden');
+    demoBanner.classList.remove('hidden');
+    demoTag.classList.remove('hidden');
+  } else {
+    demoBanner.classList.add('hidden');
+    demoTag.classList.add('hidden');
+    if (uploadedFileUrl) {
+      section.classList.remove('hidden');
+      content.innerHTML = '';
+      if (uploadedFileType === 'application/pdf') {
+        content.innerHTML = `<iframe src="${uploadedFileUrl}" class="w-full h-full border-0" title="원본 PDF"></iframe>`;
+      } else if (uploadedFileType && uploadedFileType.startsWith('image/')) {
+        content.innerHTML = `<img src="${uploadedFileUrl}" class="max-h-full max-w-full object-contain p-2" alt="원본 이미지"/>`;
+      } else {
+        content.innerHTML = `<div class="text-gray-400 text-sm flex items-center gap-2"><span class="material-symbols-outlined">description</span>파일 미리보기를 지원하지 않는 형식입니다</div>`;
+      }
+    } else {
+      section.classList.add('hidden');
+    }
+  }
+}
+
+function toggleFilePreview() {
+  const container = document.getElementById('filePreviewContainer');
+  const icon = document.getElementById('filePreviewToggleIcon');
+  filePreviewOpen = !filePreviewOpen;
+  if (filePreviewOpen) {
+    container.style.maxHeight = '200px';
+    icon.textContent = 'expand_more';
+  } else {
+    container.style.maxHeight = '0';
+    icon.textContent = 'chevron_right';
+  }
 }
 
 // ---- Render Results ----
 function renderResults(data, filename) {
-  // Delay for loading effect
+  const elapsed = Date.now() - loadingStartTime;
+  const minDelay = 2000;
+  const remaining = Math.max(0, minDelay - elapsed);
+
   setTimeout(() => {
     // Top bar
     document.getElementById('resultFileName').textContent = filename || '계약서';
@@ -771,9 +1055,12 @@ function renderResults(data, filename) {
     document.getElementById('summaryRiskCount').textContent = data.summary?.deviatedClauseCount || 0;
     document.getElementById('summaryTotalCount').textContent = data.summary?.totalClauseCount || 0;
     const maxRisk = data.summary?.totalMaxRisk || 0;
-    document.getElementById('summaryMaxRisk').textContent = '₩' + maxRisk.toLocaleString();
+    document.getElementById('summaryMaxRisk').textContent = '\u20A9' + maxRisk.toLocaleString();
 
-    // Render contract clauses
+    // File preview / demo banner
+    renderFilePreview();
+
+    // Render contract clauses (Grammarly annotation view)
     renderContractDocument(data);
 
     // Render checklist
@@ -792,20 +1079,20 @@ function renderResults(data, filename) {
     // Show result
     showScreen('result');
     closePanelDetail();
-  }, 4500);
+  }, remaining);
 }
 
-// ---- Contract Document Viewer ----
-function renderContractDocument(data) {
-  const container = document.getElementById('clauseList');
-  container.innerHTML = '';
-
-  // Merge risk clauses + safe clauses for document-like display
+// ---- Merge & Sort Clauses ----
+function mergeAndSortClauses(data) {
   const allClauses = [];
 
   // Safe clauses
   (data.safeClausesSummary || []).forEach(sc => {
-    allClauses.push({ number: sc.number, title: sc.title, deviationScore: sc.deviationScore, status: sc.status, isRisk: false });
+    allClauses.push({
+      number: sc.number, title: sc.title,
+      deviationScore: sc.deviationScore, status: sc.status,
+      body: sc.body || '', isRisk: false,
+    });
   });
 
   // Risk clauses
@@ -820,45 +1107,70 @@ function renderContractDocument(data) {
     return numA - numB;
   });
 
-  allClauses.forEach(clause => {
+  return allClauses;
+}
+
+// ---- Contract Document Viewer (Grammarly Annotation Style) ----
+function renderContractDocument(data) {
+  const container = document.getElementById('clauseList');
+  container.innerHTML = '';
+
+  const allClauses = mergeAndSortClauses(data);
+
+  allClauses.forEach((clause) => {
     const div = document.createElement('div');
+    const clauseNum = (clause.number || '').replace(/[^0-9]/g, '');
+    div.id = `clause-${clauseNum}`;
 
     if (clause.isRisk) {
-      div.className = 'clause-risk-highlight rounded-lg p-4 mb-2';
+      const level = clause.deviationScore >= 80 ? 'danger' : 'caution';
+      const bgColor = level === 'danger' ? 'bg-red-500' : 'bg-amber-500';
+      const tooltipText = clause.easyKorean?.level1 || '';
+
+      div.className = `annotation-${level} rounded-lg p-4 mb-3 pr-12 relative`;
       div.setAttribute('data-idx', clause.riskIdx);
       div.onclick = () => openDetail(clause.riskIdx);
       div.innerHTML = `
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-bold text-gray-900">${clause.number}</span>
-            <span class="text-sm font-medium text-gray-700">${clause.title}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${clause.deviationScore >= 80 ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}">
-              ${clause.deviationScore >= 80 ? '위험' : '주의'} ${clause.deviationScore}%
-            </span>
-            <span class="material-symbols-outlined text-gray-400 text-base">chevron_right</span>
-          </div>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="font-bold text-gray-900">${clause.number}</span>
+          <span class="font-medium text-gray-700">${clause.title}</span>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold ${level === 'danger' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}">
+            ${level === 'danger' ? '위험' : '주의'} ${clause.deviationScore}%
+          </span>
         </div>
-        <p class="text-sm text-gray-600 leading-relaxed serif-text">${clause.original || ''}</p>
+        <p class="text-sm text-gray-700 leading-relaxed serif-text">${clause.body || clause.original || ''}</p>
+        <!-- Margin marker -->
+        <div class="annotation-marker ${bgColor} text-white">${clause.riskIdx + 1}</div>
+        <!-- Hover tooltip -->
+        ${tooltipText ? `<div class="annotation-tooltip">${tooltipText}</div>` : ''}
       `;
     } else {
-      div.className = 'clause-safe rounded-lg p-4 mb-2';
+      div.className = 'p-4 mb-3 border-l-2 border-transparent hover:border-gray-200 transition-colors rounded-lg';
       div.innerHTML = `
-        <div class="flex items-center justify-between mb-1">
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-bold text-gray-900">${clause.number}</span>
-            <span class="text-sm font-medium text-gray-700">${clause.title}</span>
-          </div>
-          <span class="px-2 py-0.5 rounded text-[10px] font-bold ${clause.status === 'caution' ? 'bg-amber-50 text-amber-500' : 'bg-green-50 text-green-500'}">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="font-bold text-gray-900 text-sm">${clause.number}</span>
+          <span class="font-medium text-gray-600 text-sm">${clause.title}</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded ${clause.status === 'caution' ? 'bg-amber-50 text-amber-500' : 'bg-green-50 text-green-500'}">
             ${clause.status === 'caution' ? '주의' : '안전'}
           </span>
         </div>
+        ${clause.body ? `<p class="text-sm text-gray-500 leading-relaxed serif-text">${clause.body}</p>` : ''}
       `;
     }
 
     container.appendChild(div);
   });
+}
+
+// ---- Scroll to Clause (from checklist) ----
+function scrollToClause(clauseNumber) {
+  const num = (clauseNumber || '').replace(/[^0-9]/g, '');
+  const el = document.getElementById(`clause-${num}`);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('clause-pulse');
+    setTimeout(() => el.classList.remove('clause-pulse'), 2000);
+  }
 }
 
 // ---- Checklist ----
@@ -870,7 +1182,10 @@ function renderChecklist(data) {
     const div = document.createElement('div');
     div.className = 'p-3 rounded-xl border cursor-pointer transition-all hover:shadow-sm ' +
       (isUrgent ? 'border-red-200 bg-red-50 hover:bg-red-100' : 'border-amber-200 bg-amber-50 hover:bg-amber-100');
-    div.onclick = () => openDetail(idx);
+    div.onclick = () => {
+      scrollToClause(c.number);
+      openDetail(idx);
+    };
     div.innerHTML = `
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
@@ -892,9 +1207,11 @@ function openDetail(idx) {
   currentClauseIdx = idx;
   currentTabLevel = 1;
 
-  // Highlight active clause
-  document.querySelectorAll('.clause-risk-highlight').forEach(el => {
-    el.classList.toggle('active', parseInt(el.dataset.idx) === idx);
+  // Highlight active clause in annotation view
+  document.querySelectorAll('[data-idx]').forEach(el => {
+    const isActive = parseInt(el.dataset.idx) === idx;
+    el.classList.toggle('ring-2', isActive);
+    el.classList.toggle('ring-indigo-400', isActive);
   });
 
   // Fill detail panel
@@ -941,7 +1258,9 @@ function openDetail(idx) {
 function closePanelDetail() {
   document.getElementById('panelDefault').classList.remove('hidden');
   document.getElementById('panelDetail').classList.add('hidden');
-  document.querySelectorAll('.clause-risk-highlight').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('[data-idx]').forEach(el => {
+    el.classList.remove('ring-2', 'ring-indigo-400');
+  });
   currentClauseIdx = -1;
 }
 

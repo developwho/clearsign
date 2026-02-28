@@ -105,13 +105,13 @@
     }
   ],
   "safeClausesSummary": [
-    {"number": "제1조", "title": "목적물의 표시", "deviationScore": 5, "status": "safe"},
-    {"number": "제2조", "title": "보증금과 차임", "deviationScore": 3, "status": "safe"},
-    {"number": "제3조", "title": "임대차 기간", "deviationScore": 2, "status": "safe"},
-    {"number": "제5조", "title": "임차인의 의무", "deviationScore": 8, "status": "safe"},
-    {"number": "제6조", "title": "임대인의 의무", "deviationScore": 25, "status": "caution"},
-    {"number": "제11조", "title": "손해배상", "deviationScore": 35, "status": "caution"},
-    {"number": "제12조", "title": "분쟁해결", "deviationScore": 20, "status": "safe"}
+    {"number": "제1조", "title": "목적물의 표시", "deviationScore": 5, "status": "safe", "body": "임대인은 아래 표시 부동산의 전부를 임대차 목적물로 임차인에게 임대하고, 임차인은 이를 임차한다."},
+    {"number": "제2조", "title": "보증금과 차임", "deviationScore": 3, "status": "safe", "body": "보증금은 금 5,000만원정으로 하고, 차임(월세)은 금 50만원정으로 하며, 임차인은 매월 25일에 지급한다."},
+    {"number": "제3조", "title": "임대차 기간", "deviationScore": 2, "status": "safe", "body": "임대차 기간은 2026년 3월 1일부터 2028년 2월 28일까지로 한다."},
+    {"number": "제5조", "title": "임차인의 의무", "deviationScore": 8, "status": "safe", "body": "임차인은 임대인의 동의 없이 임차물을 전대하거나 임차권을 양도할 수 없으며, 임차물의 구조변경 및 파손을 하여서는 아니 된다. 임차인은 선량한 관리자의 주의로 임차물을 사용·수익하여야 한다."},
+    {"number": "제6조", "title": "임대인의 의무", "deviationScore": 25, "status": "caution", "body": "임대인은 목적물을 계약 내용에 적합한 상태로 인도한다."},
+    {"number": "제11조", "title": "손해배상", "deviationScore": 35, "status": "caution", "body": "임차인이 이 계약과 관련하여 임대인에게 손해를 입힌 경우, 그 손해 전액을 배상하여야 한다. 임대인의 손해배상 책임은 고의 또는 중대한 과실이 있는 경우에 한한다."},
+    {"number": "제12조", "title": "분쟁해결", "deviationScore": 20, "status": "safe", "body": "이 계약에 관한 분쟁은 임대인의 주소지를 관할하는 법원을 전속 관할로 한다."}
   ],
   "overallAction": {
     "type": "warning",

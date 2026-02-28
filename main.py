@@ -18,6 +18,7 @@ logger = logging.getLogger("clearsign")
 # Config
 # ---------------------------------------------------------------------------
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 PORT = int(os.environ.get("PORT", 8080))
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "시연, 문제정의 시작 화면")
@@ -214,7 +215,8 @@ SINGLE_CALL_PROMPT = """당신은 임대차 계약서 위험 분석 AI입니다.
       "number": "제N조",
       "title": "조항 제목",
       "deviationScore": 0-40,
-      "status": "safe" 또는 "caution"
+      "status": "safe" 또는 "caution",
+      "body": "조항 원문 전체"
     }
   ],
   "overallAction": {
@@ -236,7 +238,7 @@ async def run_single_gemini(file_bytes: bytes, mime_type: str) -> dict | None:
 
         response = await asyncio.to_thread(
             client.models.generate_content,
-            model="gemini-2.5-pro",
+            model="gemini-3-flash-preview",
             contents=types.Content(
                 role="user",
                 parts=[
@@ -358,6 +360,12 @@ def _get_fraud_fallback(address: str) -> dict:
 @app.get("/health")
 async def health():
     return {"status": "ok", "api_key_set": bool(GEMINI_API_KEY)}
+
+
+@app.get("/api/config")
+async def config():
+    """Return public client-side configuration."""
+    return JSONResponse(content={"googleClientId": GOOGLE_CLIENT_ID})
 
 
 @app.get("/api/demo")

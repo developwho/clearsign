@@ -1,7 +1,10 @@
-.claude/
-*.md
-화면 예시/
+venv/
 __pycache__/
 *.pyc
+.claude/
 .git/
 .env
+env.txt
+화면 예시/
+변환 기준/
+*.md
