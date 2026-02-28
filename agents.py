@@ -46,7 +46,7 @@ def calculate_risk_amount(
         dict: clause_number, deviation_score, risk_amount, calculation_basis
     """
     if deviation_score >= 90:
-        risk_amount = int(deposit_amount * 0.10)
+        risk_amount = int(deposit_amount * 0.20)
     elif deviation_score >= 80:
         risk_amount = int(deposit_amount * 0.10)
     elif deviation_score >= 70:
@@ -63,6 +63,32 @@ def calculate_risk_amount(
         "deviation_score": deviation_score,
         "risk_amount": risk_amount,
         "calculation_basis": f"보증금 {deposit_amount:,}원, 월세 {monthly_rent:,}원 기준",
+    }
+
+
+def generate_cloze_scoring_rubric(
+    clause_number: str,
+    target_term: str,
+    correct_answer: str,
+) -> dict:
+    """Cloze 문항의 의미 기반 유연 채점 기준을 생성합니다.
+
+    농인/난청인의 철자·조사 오류를 허용하는 채점 기준을 만듭니다.
+
+    Args:
+        clause_number: 조항 번호 (예: "제4조")
+        target_term: 빈칸에 들어갈 핵심 개념어
+        correct_answer: 정답
+
+    Returns:
+        dict: clause_number, target_term, correct_answer, acceptable_synonyms, scoring_note
+    """
+    return {
+        "clause_number": clause_number,
+        "target_term": target_term,
+        "correct_answer": correct_answer,
+        "acceptable_synonyms": [correct_answer],
+        "scoring_note": "철자 오류, 조사 차이, 동의어 사용 모두 정답 처리. 의미 일치 여부만 판단.",
     }
 
 
@@ -355,6 +381,21 @@ def action_instruction(context):
         "level2": "비유 설명",
         "level3": "구체적 시나리오"
       }},
+      "structuredBreakdown": {{
+        "who": "행위 주체",
+        "what": "행위 내용",
+        "when": "시기/기한",
+        "condition": "조건",
+        "result": "결과",
+        "risk": "위험"
+      }},
+      "termGlossary": [
+        {{
+          "original": "법률 용어",
+          "simple": "쉬운 설명",
+          "context": "이 조항에서의 의미"
+        }}
+      ],
       "action": {{
         "type": "danger" 또는 "negotiate",
         "priority": "urgent" 또는 "high",
@@ -382,6 +423,10 @@ def action_instruction(context):
 - type이 negotiate인 경우: "📋 수정 요청 메시지:"로 시작, 근거법 언급
 - 수정 요청 메시지는 존댓말로, 집주인에게 직접 말하는 형태
 - overallAction.message에는 위험 조항 수, 최대 손실, 확인 체크리스트 포함
+
+structuredBreakdown / termGlossary 매핑 규칙:
+- 쉬운 한국어 변환 결과(translated_result)의 각 조항에 structuredBreakdown과 termGlossary가 있으면 그대로 매핑
+- 없는 경우, 해당 조항의 easyKorean 내용을 기반으로 직접 생성
 - JSON만 출력하세요."""
 
 
@@ -398,9 +443,105 @@ action_agent = Agent(
 )
 
 # ---------------------------------------------------------------------------
+# Agent 5: ComprehensionVerifier
+# ---------------------------------------------------------------------------
+def verifier_instruction(context):
+    """Agent 5 instruction — ISO 24495-1 Find-Understand-Use 기반 이해도 검증 문항 생성."""
+    translated = context.state.get("translated_result", "{}")
+    risk = context.state.get("risk_analysis", "{}")
+    final = context.state.get("final_result", "{}")
+    return f"""당신은 농인·난청인 대상 문서 이해도 검증 전문가입니다.
+ISO 24495-1의 Find-Understand-Use 프레임워크에 기반하여
+쉬운 한국어로 변환된 계약서 설명의 이해도를 검증하는 문항을 생성하세요.
+
+## 배경
+- Cloze Test는 농인 대상 타당도/신뢰도가 검증된 이해도 측정 도구입니다.
+- 채점 시 철자 오류, 조사 차이, 동의어는 모두 정답으로 처리합니다 (의미 기반 유연 채점).
+- 3종 문항을 통해 Find(찾기), Understand(이해), Use(활용) 수준을 모두 평가합니다.
+
+## 입력 데이터
+
+쉬운 한국어 변환 결과:
+{translated}
+
+위험 분석 결과:
+{risk}
+
+최종 행동 스크립트:
+{final}
+
+## 출력 JSON 형식
+
+generate_cloze_scoring_rubric 도구를 호출하여 각 Cloze 문항의 채점 기준을 생성하세요.
+
+반드시 아래 JSON 형식으로 출력하세요:
+{{
+  "comprehension": {{
+    "clozeQuestions": [
+      {{
+        "clauseNumber": "제N조",
+        "questionType": "cloze",
+        "sentence": "빈칸이 포함된 문장 (핵심 개념어를 ___로 대체)",
+        "question": "빈칸에 들어갈 알맞은 말은 무엇인가요?",
+        "answer": "정답",
+        "acceptableSynonyms": ["동의어1", "동의어2"],
+        "scoringNote": "의미 일치 여부만 판단. 철자·조사 오류 허용."
+      }}
+    ],
+    "scenarioQuestions": [
+      {{
+        "clauseNumber": "제N조",
+        "questionType": "scenario",
+        "scenario": "구체적인 상황 설명 (일상적 맥락)",
+        "question": "이런 상황에서 어떻게 해야 하나요?",
+        "choices": [
+          {{"label": "A", "text": "선택지 1"}},
+          {{"label": "B", "text": "선택지 2"}},
+          {{"label": "C", "text": "선택지 3"}}
+        ],
+        "correctAnswer": "A",
+        "explanation": "정답 이유 설명 (쉬운 한국어로)"
+      }}
+    ],
+    "recallQuestions": [
+      {{
+        "questionType": "recall",
+        "question": "이 계약서에서 가장 위험한 점 3가지는 무엇인가요?",
+        "goldStandardIdeas": [
+          "핵심 아이디어 1",
+          "핵심 아이디어 2",
+          "핵심 아이디어 3"
+        ],
+        "scoringNote": "3가지 중 2가지 이상 언급하면 이해한 것으로 판단"
+      }}
+    ]
+  }}
+}}
+
+## 생성 규칙
+- clozeQuestions: 위험 조항별 최소 1개, 총 3~5개. level1 설명에서 핵심 개념어를 빈칸으로.
+- scenarioQuestions: 위험 조항 중 상위 2~3개에 대해 "만약 ~한 상황이면?" 형태.
+- recallQuestions: 전체에 대해 1개. 가장 위험한 점 3가지를 묻는 개방형.
+- 모든 문장은 쉬운 한국어 (7대 변환 원칙 적용).
+- JSON만 출력하세요."""
+
+
+verifier_agent = Agent(
+    name="comprehension_verifier",
+    model=MODEL_FLASH,
+    instruction=verifier_instruction,
+    tools=[generate_cloze_scoring_rubric],
+    generate_content_config=types.GenerateContentConfig(
+        temperature=0.3,
+        response_mime_type="application/json",
+    ),
+    output_key="verified_result",
+)
+
+# ---------------------------------------------------------------------------
 # Pipeline
 # ---------------------------------------------------------------------------
 pipeline = SequentialAgent(
     name="clearsign_pipeline",
-    sub_agents=[parser_agent, analyzer_agent, translator_agent, action_agent],
+    sub_agents=[parser_agent, analyzer_agent, translator_agent, action_agent, verifier_agent],
 )
